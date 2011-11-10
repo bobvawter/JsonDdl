@@ -1,6 +1,8 @@
 package org.jsonddl.generator.model;
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-09T23:40:52")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-10T00:59:41")
 public class Model implements org.jsonddl.JsonDdlObject<Model> {
+private String comment;
+public String getComment() {return comment;}
 private String name;
 public String getName() {return name;}
 private java.util.List<Property> properties;
@@ -12,9 +14,11 @@ Model toReturn = obj;
 obj = null;
 return toReturn;
 }
+public Builder withComment(String value) { obj.comment = value; return this;}
 public Builder withName(String value) { obj.name = value; return this;}
 public Builder withProperties(java.util.List<Property> value) { obj.properties = value; return this;}
 public Builder from(Model from) {
+withComment(from.getComment());
 withName(from.getName());
 withProperties(from.getProperties());
 return this;}
@@ -29,13 +33,19 @@ return new org.jsonddl.Context.SettableContext<Model>(null,this).traverse(visito
 public Builder builder() { return newInstance().from(this); }
 public Builder newInstance() { return new Builder(); }
 public void traverse(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Model> ctx) {
+if (org.jsonddl.VisitSupport.visit(visitor, this,ctx)) {
 new org.jsonddl.Context.ImmutableListContext<Property>("properties", this.properties).traverse(visitor);
 
 }
+org.jsonddl.VisitSupport.endVisit(visitor, this, ctx);
+}
 public Model traverseMutable(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Model> ctx) {
 Builder builder = builder();
+if (org.jsonddl.VisitSupport.visit(visitor, this,ctx)) {
 builder.withProperties(new org.jsonddl.Context.ListContext<Property>("properties", this.properties).traverse(visitor));
 
+}
+org.jsonddl.VisitSupport.endVisit(visitor, this, ctx);
 return builder.build();
 }
 }

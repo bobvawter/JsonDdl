@@ -7,7 +7,7 @@ public enum Kind {
   DDL(Context.ImmutableContext.class, Context.SettableContext.class),
   EXTERNAL,
   LIST(Context.ImmutableListContext.class, Context.ListContext.class),
-  MAP,
+  MAP(Context.ImmutableMapContext.class, Context.MapContext.class),
   PRIMITIVE;
 
   private final Class<? extends Context> immutable;

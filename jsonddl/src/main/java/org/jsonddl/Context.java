@@ -16,6 +16,7 @@ package org.jsonddl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 
 public abstract class Context<J extends JsonDdlObject<J>> {
   public static class ImmutableContext<J extends JsonDdlObject<J>> extends Context<J> {
@@ -28,14 +29,16 @@ public abstract class Context<J extends JsonDdlObject<J>> {
 
     @Override
     public J traverse(JsonDdlVisitor visitor) {
-      value.traverse(visitor, this);
+      if (value != null) {
+        value.traverse(visitor, this);
+      }
       return value;
     }
   }
 
   public static class ImmutableListContext<J extends JsonDdlObject<J>> extends Context<J> {
-    protected final List<J> list;
-    protected ListIterator<J> it;
+    private final List<J> list;
+    private ListIterator<J> it;
 
     public ImmutableListContext(String property, List<J> list) {
       super(property);
@@ -47,15 +50,43 @@ public abstract class Context<J extends JsonDdlObject<J>> {
     public List<J> traverse(JsonDdlVisitor visitor) {
       it = list.listIterator();
       while (it.hasNext()) {
-        it.next().traverse(visitor, this);
+        J value = it.next();
+        if (value != null) {
+          value.traverse(visitor, this);
+        }
       }
       return list;
     }
   }
 
-  public static class ListContext<J extends JsonDdlObject<J>> extends ImmutableListContext<J> {
+  public static class ImmutableMapContext<J extends JsonDdlObject<J>> extends Context<J> {
+    private Map<String, J> map;
+
+    public ImmutableMapContext(String property, Map<String, J> map) {
+      super(property);
+      this.map = map;
+    }
+
+    @Override
+    public Map<String, J> traverse(JsonDdlVisitor visitor) {
+      if (map != null) {
+        for (Map.Entry<String, J> entry : map.entrySet()) {
+          new Context.ImmutableContext<J>(getProperty(), entry.getValue());
+        }
+      }
+      return map;
+    }
+  }
+
+  public static class ListContext<J extends JsonDdlObject<J>> extends Context<J> {
+    private final List<J> list;
+    private ListIterator<J> it;
+    private boolean didReplace;
+
     public ListContext(String property, List<J> list) {
-      super(property, list);
+      super(property);
+      this.list = new ArrayList<J>(list);
+      it = list.listIterator();
     }
 
     @Override
@@ -72,11 +103,49 @@ public abstract class Context<J extends JsonDdlObject<J>> {
 
     @Override
     public void replace(J replacement) {
+      didReplace = true;
       it.set(replacement);
+    }
+
+    @Override
+    public List<J> traverse(JsonDdlVisitor visitor) {
+      it = list.listIterator();
+      while (it.hasNext()) {
+        J value = it.next();
+        didReplace = false;
+        if (value != null) {
+          J temp = value.traverseMutable(visitor, this);
+          if (!didReplace) {
+            replace(temp);
+          }
+        }
+      }
+      return list;
+    }
+  }
+
+  public static class MapContext<J extends JsonDdlObject<J>> extends Context<J> {
+    private Map<String, J> map;
+
+    public MapContext(String property, Map<String, J> map) {
+      super(property);
+      this.map = map;
+    }
+
+    @Override
+    public Map<String, J> traverse(JsonDdlVisitor visitor) {
+      if (map != null) {
+        for (Map.Entry<String, J> entry : map.entrySet()) {
+          entry.setValue(new Context.SettableContext<J>(getProperty(), entry.getValue())
+              .traverse(visitor));
+        }
+      }
+      return map;
     }
   }
 
   public static class SettableContext<J extends JsonDdlObject<J>> extends Context<J> {
+    private boolean didReplace;
     private J value;
 
     public SettableContext(String property, J value) {
@@ -86,12 +155,18 @@ public abstract class Context<J extends JsonDdlObject<J>> {
 
     @Override
     public void replace(J replacement) {
+      didReplace = true;
       value = replacement;
     }
 
     @Override
     public J traverse(JsonDdlVisitor visitor) {
-      value.traverse(visitor, this);
+      if (value != null) {
+        J temp = value.traverseMutable(visitor, this);
+        if (!didReplace) {
+          value = temp;
+        }
+      }
       return value;
     }
   }
@@ -122,5 +197,8 @@ public abstract class Context<J extends JsonDdlObject<J>> {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * Returns the value of the context after traversal is complete.
+   */
   public abstract Object traverse(JsonDdlVisitor visitor);
 }

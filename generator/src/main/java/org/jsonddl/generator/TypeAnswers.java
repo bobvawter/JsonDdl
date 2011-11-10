@@ -10,6 +10,10 @@ class TypeAnswers {
         return true;
       case LIST:
         return Kind.DDL.equals(type.getListElement().getKind());
+      case MAP:
+        return Kind.EXTERNAL.equals(type.getMapKey().getKind())
+          && "String".equals(type.getMapKey().getName())
+          && Kind.DDL.equals(type.getMapValue().getKind());
     }
     return false;
   }
@@ -20,6 +24,8 @@ class TypeAnswers {
         return type.getName();
       case LIST:
         return type.getListElement().getName();
+      case MAP:
+        return type.getMapValue().getName();
     }
     throw new IllegalStateException();
   }

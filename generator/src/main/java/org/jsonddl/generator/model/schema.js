@@ -18,10 +18,12 @@ var schema = {
 	}
     },
     Model : {
+	comment : "",
 	name : "",
 	properties : [ "Property" ]
     },
     Property : {
+	comment : "",
 	name : "",
 	type : "Type"
     },

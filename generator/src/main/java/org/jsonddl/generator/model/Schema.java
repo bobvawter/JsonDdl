@@ -1,5 +1,5 @@
 package org.jsonddl.generator.model;
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-09T23:40:52")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-10T00:59:41")
 public class Schema implements org.jsonddl.JsonDdlObject<Schema> {
 private java.util.Map<String,Model> models;
 public java.util.Map<String,Model> getModels() {return models;}
@@ -25,11 +25,19 @@ return new org.jsonddl.Context.SettableContext<Schema>(null,this).traverse(visit
 public Builder builder() { return newInstance().from(this); }
 public Builder newInstance() { return new Builder(); }
 public void traverse(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Schema> ctx) {
+if (org.jsonddl.VisitSupport.visit(visitor, this,ctx)) {
+new org.jsonddl.Context.ImmutableMapContext<Model>("models", this.models).traverse(visitor);
 
+}
+org.jsonddl.VisitSupport.endVisit(visitor, this, ctx);
 }
 public Schema traverseMutable(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Schema> ctx) {
 Builder builder = builder();
+if (org.jsonddl.VisitSupport.visit(visitor, this,ctx)) {
+builder.withModels(new org.jsonddl.Context.MapContext<Model>("models", this.models).traverse(visitor));
 
+}
+org.jsonddl.VisitSupport.endVisit(visitor, this, ctx);
 return builder.build();
 }
 }
