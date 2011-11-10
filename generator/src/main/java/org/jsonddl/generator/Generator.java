@@ -13,6 +13,10 @@
  */
 package org.jsonddl.generator;
 
+import static org.jsonddl.generator.TypeAnswers.canTraverse;
+import static org.jsonddl.generator.TypeAnswers.getContextParameterization;
+import static org.jsonddl.generator.TypeAnswers.getQualifiedSourceName;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -36,7 +40,8 @@ import javax.annotation.Generated;
 import org.jsonddl.Context;
 import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
-import org.jsonddl.generator.Type.Kind;
+import org.jsonddl.generator.model.Kind;
+import org.jsonddl.generator.model.Type;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.RhinoException;
@@ -61,6 +66,7 @@ public class Generator {
   }
 
   public static void main(String[] args) throws IOException {
+    final File outputRoot = new File(args[2]);
     new Generator().generate(new FileInputStream(new File(args[0])), args[1], new Collector() {
       @Override
       public void println(String message) {
@@ -75,8 +81,7 @@ public class Generator {
       @Override
       public OutputStream writeImplementation(String packageName, String simpleName)
             throws IOException {
-        File f = new File("/tmp/foo");
-        f = new File(f, packageName.replace('.', File.separatorChar));
+        File f = new File(outputRoot, packageName.replace('.', File.separatorChar));
         f.mkdirs();
         f = new File(f, simpleName + ".java");
         return new FileOutputStream(f);
@@ -157,17 +162,18 @@ public class Generator {
         String getterName = Character.toUpperCase(propName.charAt(0))
           + (propName.length() > 1 ? propName.substring(1) : "");
 
-        out.println("private " + type.getQualifiedName() + " " + propName + ";");
-        out.println("public " + type.getQualifiedName() + " get" + getterName + "() {return "
+        String qsn = getQualifiedSourceName(type);
+        out.println("private " + qsn + " " + propName + ";");
+        out.println("public " + qsn + " get" + getterName + "() {return "
           + propName + ";}");
-        builder.println("public Builder with" + getterName + "(" + type.getQualifiedName()
+        builder.println("public Builder with" + getterName + "(" + qsn
           + " value) { obj."
           + propName + " = value; return this;}");
 
         from.println("with" + getterName + "(from.get" + getterName + "());");
 
-        if (type.canTraverse()) {
-          String contextArgs = "<" + type.getContextParameterization() + ">(\"" + propName
+        if (canTraverse(type)) {
+          String contextArgs = "<" + getContextParameterization(type) + ">(\"" + propName
             + "\", this."
             + propName + ").traverse(visitor)";
           String traverseCall = "new "
@@ -185,6 +191,8 @@ public class Generator {
       builder.println("}");
       out.append(builderContents.getBuffer().toString());
 
+      out.println("private " + simpleName + "(){}");
+
       out.println("public void accept(" + JsonDdlVisitor.class.getCanonicalName() + " visitor) {");
       out.println("new " + Context.ImmutableContext.class.getCanonicalName() + "<" + simpleName
         + ">(null,this).traverse(visitor);");
@@ -198,7 +206,8 @@ public class Generator {
         + ">(null,this).traverse(visitor);");
       out.println("}");
 
-      out.println("public Builder builder() { return new Builder().from(this); }");
+      out.println("public Builder builder() { return newInstance().from(this); }");
+      out.println("public Builder newInstance() { return new Builder(); }");
 
       out.println("public void traverse(" + JsonDdlVisitor.class.getCanonicalName()
         + " visitor, "
@@ -267,16 +276,25 @@ public class Generator {
     if (string != null) {
       String value = string.getValue();
       if (value.isEmpty()) {
-        return new Type(Kind.EXTERNAL, "String");
+        return new Type.Builder()
+            .withKind(Kind.EXTERNAL)
+            .withName("String")
+            .build();
       } else if (ddlNames.contains(value)) {
-        return new Type(Kind.DDL, value);
+        return new Type.Builder()
+            .withKind(Kind.DDL)
+            .withName(value)
+            .build();
       }
-      return new Type(Kind.EXTERNAL, value);
+      return new Type.Builder().withKind(Kind.EXTERNAL).withName(value).build();
     }
     Name name = castOrNull(Name.class, node);
     if (name != null) {
       String id = name.getIdentifier();
-      return new Type(ddlNames.contains(id) ? Kind.DDL : Kind.EXTERNAL, id);
+      return new Type.Builder()
+          .withKind(ddlNames.contains(id) ? Kind.DDL : Kind.EXTERNAL)
+          .withName(id)
+          .build();
     }
 
     ArrayLiteral array = castOrNull(ArrayLiteral.class, node);
@@ -284,21 +302,33 @@ public class Generator {
       if (array.getSize() != 1) {
         throw new UnexpectedNodeException(array, "Expecting exactly one entry");
       }
-      return new Type(typeName(array.getElement(0), ddlNames, true));
+      return new Type.Builder()
+          .withKind(Kind.LIST)
+          .withListElement(typeName(array.getElement(0), ddlNames, true))
+          .build();
     }
 
     KeywordLiteral keyword = castOrNull(KeywordLiteral.class, node);
     if (keyword != null && keyword.isBooleanLiteral()) {
-      return new Type(Kind.PRIMITIVE, forceBoxed ? "Boolean" : "boolean");
+      return new Type.Builder()
+          .withKind(Kind.PRIMITIVE)
+          .withName(forceBoxed ? "Boolean" : "boolean")
+          .build();
     }
 
     NumberLiteral num = castOrNull(NumberLiteral.class, node);
     if (num != null) {
       double d = num.getNumber();
       if (Math.round(d) == d) {
-        return new Type(Kind.PRIMITIVE, forceBoxed ? "Integer" : "int");
+        return new Type.Builder()
+            .withKind(Kind.PRIMITIVE)
+            .withName(forceBoxed ? "Integer" : "int")
+            .build();
       } else {
-        return new Type(Kind.PRIMITIVE, forceBoxed ? "Double" : "double");
+        return new Type.Builder()
+            .withKind(Kind.PRIMITIVE)
+            .withName(forceBoxed ? "Double" : "double")
+            .build();
       }
     }
     ObjectLiteral obj = castOrNull(ObjectLiteral.class, node);
@@ -307,8 +337,11 @@ public class Generator {
         throw new UnexpectedNodeException(obj, "Expecting exactly one property");
       }
       ObjectProperty prop = obj.getElements().get(0);
-      return new Type(typeName(prop.getLeft(), ddlNames, true), typeName(prop.getRight(), ddlNames,
-          true));
+      return new Type.Builder()
+          .withKind(Kind.MAP)
+          .withMapKey(typeName(prop.getLeft(), ddlNames, true))
+          .withMapValue(typeName(prop.getRight(), ddlNames, true))
+          .build();
     }
 
     throw new UnexpectedNodeException(node);

@@ -11,33 +11,25 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.jsonddl;
-
-public interface JsonDdlObject<J extends JsonDdlObject<J>> {
-  public interface Builder<J extends JsonDdlObject<J>> {
-    J build();
-
-    Builder<J> from(J copyFrom);
-    //
-    // Builder<J> from(String json);
-  }
-
-  void accept(JsonDdlVisitor visitor);
-
-  //
-  J acceptMutable(JsonDdlVisitor visitor);
-
-  //
-  // <O extends JsonDdlObject<O>> O as(Class<O> clazz);
-  //
-  Builder<J> builder();
-
-  Builder<J> newInstance();
-
-  //
-  // String toJson();
-  //
-  void traverse(JsonDdlVisitor visitor, Context<J> ctx);
-
-  J traverseMutable(JsonDdlVisitor visitor, Context<J> ctx);
-}
+var schema = {
+    Schema : {
+	models : {
+	    "" : "Model"
+	}
+    },
+    Model : {
+	name : "",
+	properties : [ "Property" ]
+    },
+    Property : {
+	name : "",
+	type : "Type"
+    },
+    Type : {
+	name : "",
+	kind : "Kind",
+	listElement : "Type",
+	mapKey : "Type",
+	mapValue : "Type"
+    }
+};
