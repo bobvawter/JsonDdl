@@ -24,9 +24,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.annotation.Generated;
@@ -34,6 +36,7 @@ import javax.annotation.Generated;
 import org.jsonddl.Context;
 import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
+import org.jsonddl.generator.Type.Kind;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.RhinoException;
@@ -103,13 +106,17 @@ public class Generator {
       return false;
     }
 
+    Set<String> ddlNames = new HashSet<String>();
+    for (ObjectProperty prop : obj.getElements()) {
+      ddlNames.add(extractName(prop));
+    }
+
     Date now = new Date();
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-
     for (ObjectProperty prop : obj.getElements()) {
       String simpleName = extractName(prop);
       ObjectLiteral typeDeclaration = castOrNull(ObjectLiteral.class, prop.getRight());
-      Map<String, String> typeMap = typeMap(typeDeclaration);
+      Map<String, Type> typeMap = typeMap(typeDeclaration, ddlNames);
 
       PrintWriter out = new PrintWriter(new OutputStreamWriter(output.writeImplementation(
           packageName, simpleName)));
@@ -126,32 +133,87 @@ public class Generator {
       out.print(JsonDdlObject.class.getCanonicalName() + "<" + simpleName + ">");
       out.println(" {");
 
-      StringWriter stringWriter = new StringWriter();
-      PrintWriter builder = new PrintWriter(stringWriter);
-      builder.println("public static class Builder implements "
-        + JsonDdlObject.Builder.class.getCanonicalName() + "<" + simpleName + "> {");
-      builder.println("private " + simpleName + " obj = new " + simpleName + "();");
-      builder.println("public " + simpleName + " build() {");
-      builder.println(simpleName + " toReturn = obj;");
-      builder.println("obj = null;");
-      builder.println("return toReturn;");
-      builder.println("}");
-      for (Map.Entry<String, String> entry : typeMap.entrySet()) {
-        String type = entry.getValue();
+      StringWriter builderContents = new StringWriter();
+      PrintWriter builder = new PrintWriter(builderContents);
+      {
+        builder.println("public static class Builder implements "
+          + JsonDdlObject.Builder.class.getCanonicalName() + "<" + simpleName + "> {");
+        builder.println("private " + simpleName + " obj = new " + simpleName + "();");
+        builder.println("public " + simpleName + " build() {");
+        builder.println(simpleName + " toReturn = obj;");
+        builder.println("obj = null;");
+        builder.println("return toReturn;");
+        builder.println("}");
+      }
+      StringWriter fromContents = new StringWriter();
+      PrintWriter from = new PrintWriter(fromContents);
+      StringWriter traverseContents = new StringWriter();
+      PrintWriter traverse = new PrintWriter(traverseContents);
+      StringWriter traverseMutableContents = new StringWriter();
+      PrintWriter traverseMutable = new PrintWriter(traverseMutableContents);
+      for (Map.Entry<String, Type> entry : typeMap.entrySet()) {
         String propName = entry.getKey();
+        Type type = entry.getValue();
         String getterName = Character.toUpperCase(propName.charAt(0))
           + (propName.length() > 1 ? propName.substring(1) : "");
 
-        out.println("private " + type + " " + propName + ";");
-        out.println("public " + type + " get" + getterName + "() {return " + propName + ";}");
-        builder.println("public Builder with" + getterName + "(" + type + " value) { obj."
+        out.println("private " + type.getQualifiedName() + " " + propName + ";");
+        out.println("public " + type.getQualifiedName() + " get" + getterName + "() {return "
+          + propName + ";}");
+        builder.println("public Builder with" + getterName + "(" + type.getQualifiedName()
+          + " value) { obj."
           + propName + " = value; return this;}");
-      }
-      builder.append("}");
-      out.println(stringWriter.getBuffer().toString());
 
-      out.println("public void traverse(" + JsonDdlVisitor.class.getCanonicalName() + " visitor, "
-        + Context.class.getCanonicalName() + "<" + simpleName + "> ctx) {}");
+        from.println("with" + getterName + "(from.get" + getterName + "());");
+
+        if (type.canTraverse()) {
+          String contextArgs = "<" + type.getContextParameterization() + ">(\"" + propName
+            + "\", this."
+            + propName + ").traverse(visitor)";
+          String traverseCall = "new "
+            + type.getKind().getImmutableContextType().getCanonicalName() + contextArgs;
+          traverse.println(traverseCall + ";");
+          traverseCall = "new " + type.getKind().getMutableContextType().getCanonicalName()
+            + contextArgs;
+          traverseMutable.println("builder.with" + getterName + "(" + traverseCall + ");");
+        }
+      }
+      builder.println("public Builder from(" + simpleName + " from) {");
+      builder.append(fromContents.getBuffer());
+      builder.append("return this;");
+      builder.println("}");
+      builder.println("}");
+      out.append(builderContents.getBuffer().toString());
+
+      out.println("public void accept(" + JsonDdlVisitor.class.getCanonicalName() + " visitor) {");
+      out.println("new " + Context.ImmutableContext.class.getCanonicalName() + "<" + simpleName
+        + ">(null,this).traverse(visitor);");
+      out.println("}");
+
+      out.println("public " + simpleName + " acceptMutable("
+        + JsonDdlVisitor.class.getCanonicalName()
+        + " visitor) {");
+      out.println("return new " + Context.SettableContext.class.getCanonicalName() + "<"
+        + simpleName
+        + ">(null,this).traverse(visitor);");
+      out.println("}");
+
+      out.println("public Builder builder() { return new Builder().from(this); }");
+
+      out.println("public void traverse(" + JsonDdlVisitor.class.getCanonicalName()
+        + " visitor, "
+        + Context.class.getCanonicalName() + "<" + simpleName + "> ctx) {");
+      out.println(traverseContents.getBuffer());
+      out.println("}");
+
+      out.println("public " + simpleName + " traverseMutable("
+        + JsonDdlVisitor.class.getCanonicalName()
+        + " visitor, " + Context.class.getCanonicalName() + "<" + simpleName + "> ctx) {");
+      out.println("Builder builder = builder();");
+      out.println(traverseMutableContents.getBuffer());
+      out.println("return builder.build();");
+      out.println("}");
+
       out.println("}");
 
       out.close();
@@ -186,33 +248,35 @@ public class Generator {
     return typeName;
   }
 
-  private Map<String, String> typeMap(ObjectLiteral lit) {
-    Map<String, String> toReturn = new TreeMap<String, String>();
+  private Map<String, Type> typeMap(ObjectLiteral lit, Collection<String> ddlNames) {
+    Map<String, Type> toReturn = new TreeMap<String, Type>();
 
     for (ObjectProperty prop : lit.getElements()) {
       String propertyName = extractName(prop);
-      String typeName = typeName(prop.getRight(), false);
-      toReturn.put(propertyName, typeName);
+      Type type = typeName(prop.getRight(), ddlNames, false);
+      toReturn.put(propertyName, type);
     }
-
     return toReturn;
   }
 
   /**
    * Convert an AST node to a Java type reference.
    */
-  private String typeName(AstNode node, boolean forceBoxed) {
+  private Type typeName(AstNode node, Collection<String> ddlNames, boolean forceBoxed) {
     StringLiteral string = castOrNull(StringLiteral.class, node);
     if (string != null) {
       String value = string.getValue();
       if (value.isEmpty()) {
-        return "String";
+        return new Type(Kind.EXTERNAL, "String");
+      } else if (ddlNames.contains(value)) {
+        return new Type(Kind.DDL, value);
       }
-      return value;
+      return new Type(Kind.EXTERNAL, value);
     }
     Name name = castOrNull(Name.class, node);
     if (name != null) {
-      return name.getIdentifier();
+      String id = name.getIdentifier();
+      return new Type(ddlNames.contains(id) ? Kind.DDL : Kind.EXTERNAL, id);
     }
 
     ArrayLiteral array = castOrNull(ArrayLiteral.class, node);
@@ -220,21 +284,21 @@ public class Generator {
       if (array.getSize() != 1) {
         throw new UnexpectedNodeException(array, "Expecting exactly one entry");
       }
-      return List.class.getName() + "<" + typeName(array.getElement(0), true) + ">";
+      return new Type(typeName(array.getElement(0), ddlNames, true));
     }
 
     KeywordLiteral keyword = castOrNull(KeywordLiteral.class, node);
     if (keyword != null && keyword.isBooleanLiteral()) {
-      return forceBoxed ? "Boolean" : "boolean";
+      return new Type(Kind.PRIMITIVE, forceBoxed ? "Boolean" : "boolean");
     }
 
     NumberLiteral num = castOrNull(NumberLiteral.class, node);
     if (num != null) {
       double d = num.getNumber();
       if (Math.round(d) == d) {
-        return forceBoxed ? "Integer" : "int";
+        return new Type(Kind.PRIMITIVE, forceBoxed ? "Integer" : "int");
       } else {
-        return forceBoxed ? "Double" : "double";
+        return new Type(Kind.PRIMITIVE, forceBoxed ? "Double" : "double");
       }
     }
     ObjectLiteral obj = castOrNull(ObjectLiteral.class, node);
@@ -243,8 +307,8 @@ public class Generator {
         throw new UnexpectedNodeException(obj, "Expecting exactly one property");
       }
       ObjectProperty prop = obj.getElements().get(0);
-      return Map.class.getName() + "<" + typeName(prop.getLeft(), true) + ", "
-        + typeName(prop.getRight(), true) + ">";
+      return new Type(typeName(prop.getLeft(), ddlNames, true), typeName(prop.getRight(), ddlNames,
+          true));
     }
 
     throw new UnexpectedNodeException(node);

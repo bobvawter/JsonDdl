@@ -27,29 +27,35 @@ public abstract class Context<J extends JsonDdlObject<J>> {
     }
 
     @Override
-    public J getValue() {
-      return value;
-    }
-
-    @Override
-    public void traverse(JsonDdlVisitor visitor) {
+    public J traverse(JsonDdlVisitor visitor) {
       value.traverse(visitor, this);
+      return value;
     }
   }
 
-  public static class ListContext<J extends JsonDdlObject<J>> extends Context<J> {
-    private final List<J> list;
-    private ListIterator<J> it;
+  public static class ImmutableListContext<J extends JsonDdlObject<J>> extends Context<J> {
+    protected final List<J> list;
+    protected ListIterator<J> it;
 
-    public ListContext(String property, List<J> list) {
+    public ImmutableListContext(String property, List<J> list) {
       super(property);
       this.list = new ArrayList<J>(list);
       it = list.listIterator();
     }
 
     @Override
-    public List<J> getValue() {
+    public List<J> traverse(JsonDdlVisitor visitor) {
+      it = list.listIterator();
+      while (it.hasNext()) {
+        it.next().traverse(visitor, this);
+      }
       return list;
+    }
+  }
+
+  public static class ListContext<J extends JsonDdlObject<J>> extends ImmutableListContext<J> {
+    public ListContext(String property, List<J> list) {
+      super(property, list);
     }
 
     @Override
@@ -68,14 +74,6 @@ public abstract class Context<J extends JsonDdlObject<J>> {
     public void replace(J replacement) {
       it.set(replacement);
     }
-
-    @Override
-    public void traverse(JsonDdlVisitor visitor) {
-      it = list.listIterator();
-      while (it.hasNext()) {
-        it.next().traverse(visitor, this);
-      }
-    }
   }
 
   public static class SettableContext<J extends JsonDdlObject<J>> extends Context<J> {
@@ -87,18 +85,14 @@ public abstract class Context<J extends JsonDdlObject<J>> {
     }
 
     @Override
-    public J getValue() {
-      return value;
-    }
-
-    @Override
     public void replace(J replacement) {
       value = replacement;
     }
 
     @Override
-    public void traverse(JsonDdlVisitor visitor) {
+    public J traverse(JsonDdlVisitor visitor) {
       value.traverse(visitor, this);
+      return value;
     }
   }
 
@@ -111,8 +105,6 @@ public abstract class Context<J extends JsonDdlObject<J>> {
   public String getProperty() {
     return property;
   }
-
-  public abstract Object getValue();
 
   public void insertAfter(J next) {
     throw new UnsupportedOperationException();
@@ -130,5 +122,5 @@ public abstract class Context<J extends JsonDdlObject<J>> {
     throw new UnsupportedOperationException();
   }
 
-  public abstract void traverse(JsonDdlVisitor visitor);
+  public abstract Object traverse(JsonDdlVisitor visitor);
 }

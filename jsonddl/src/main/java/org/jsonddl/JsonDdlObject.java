@@ -17,20 +17,25 @@ public interface JsonDdlObject<J extends JsonDdlObject<J>> {
   public interface Builder<J extends JsonDdlObject<J>> {
     J build();
 
-    // Builder<J> from(J copyFrom);
+    Builder<J> from(J copyFrom);
     //
     // Builder<J> from(String json);
   }
 
-  // void accept(JsonDdlVisitor visitor);
+  void accept(JsonDdlVisitor visitor);
+
   //
-  // J acceptWithReplacement(JsonDdlVisitor visitor);
+  J acceptMutable(JsonDdlVisitor visitor);
+
   //
   // <O extends JsonDdlObject<O>> O as(Class<O> clazz);
   //
-  // Builder<J> builder();
+  Builder<J> builder();
+
   //
   // String toJson();
   //
   void traverse(JsonDdlVisitor visitor, Context<J> ctx);
+
+  J traverseMutable(JsonDdlVisitor visitor, Context<J> ctx);
 }
