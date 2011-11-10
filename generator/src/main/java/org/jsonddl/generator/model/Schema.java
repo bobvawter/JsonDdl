@@ -1,7 +1,14 @@
 package org.jsonddl.generator.model;
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-10T00:59:41")
+/**
+     * A Schema is the top-level object that encapsulates the normalized form of
+     * a json-ddl schema.
+     */
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-10T01:24:56")
 public class Schema implements org.jsonddl.JsonDdlObject<Schema> {
 private java.util.Map<String,Model> models;
+/**
+	 * A map of object models by simple name.
+	 */
 public java.util.Map<String,Model> getModels() {return models;}
 public static class Builder implements org.jsonddl.JsonDdlObject.Builder<Schema> {
 private Schema obj = new Schema();

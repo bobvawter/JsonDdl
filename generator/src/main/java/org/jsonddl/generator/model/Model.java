@@ -1,5 +1,9 @@
 package org.jsonddl.generator.model;
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-10T00:59:41")
+/**
+     * A model represents a single kind of object within the schema. There is a
+     * 1:1 correspondence between Models and Java classes or JS type closures.
+     */
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-10T01:24:56")
 public class Model implements org.jsonddl.JsonDdlObject<Model> {
 private String comment;
 public String getComment() {return comment;}

@@ -46,6 +46,7 @@ import org.jsonddl.generator.model.Model;
 import org.jsonddl.generator.model.Property;
 import org.jsonddl.generator.model.Schema;
 import org.jsonddl.generator.model.Type;
+import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.RhinoException;
@@ -95,7 +96,10 @@ public class Generator {
 
   public boolean generate(InputStream schema, String packageName, Collector output)
       throws IOException {
-    Parser parser = new Parser();
+    CompilerEnvirons env = new CompilerEnvirons();
+    env.setRecordingComments(true);
+    env.setRecordingLocalJsDocComments(true);
+    Parser parser = new Parser(env);
     AstRoot root;
     try {
       root = parser.parse(new InputStreamReader(schema), packageName, 0);
@@ -123,7 +127,7 @@ public class Generator {
         properties.add(extractProperty(propertyDeclaration));
       }
       models.put(extractName(prop), new Model.Builder()
-          .withComment(prop.getJsDoc())
+          .withComment(prop.getLeft().getJsDoc())
           .withName(extractName(prop))
           .withProperties(properties)
           .build());
@@ -152,6 +156,9 @@ public class Generator {
           packageName, simpleName)));
 
       out.println("package " + packageName + ";");
+      if (model.getComment() != null) {
+        out.println(model.getComment());
+      }
       out.println("@" + Generated.class.getCanonicalName() + "(value=\""
         + getClass().getCanonicalName() + "\", date=\"" + sdf.format(now) + "\")");
       out.print("public class " + simpleName);
@@ -191,6 +198,9 @@ public class Generator {
 
         String qsn = getQualifiedSourceName(type);
         out.println("private " + qsn + " " + propName + ";");
+        if (property.getComment() != null) {
+          out.println(property.getComment());
+        }
         out.println("public " + qsn + " get" + getterName + "() {return "
           + propName + ";}");
         builder.println("public Builder with" + getterName + "(" + qsn
@@ -290,7 +300,7 @@ public class Generator {
 
   private Property extractProperty(ObjectProperty prop) {
     return new Property.Builder()
-        .withComment(prop.getJsDoc())
+        .withComment(prop.getLeft().getJsDoc())
         .withName(extractName(prop))
         .withType(typeName(prop.getRight(), false))
         .build();

@@ -11,22 +11,49 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+/**
+ * This file is a schema that defines the jsonddl schema.
+ * <p>
+ * The var declaration at the top isn't actually important to the parser, but it
+ * does make the schema a valid JavaScript program.
+ */
 var schema = {
+    /**
+     * A Schema is the top-level object that encapsulates the normalized form of
+     * a json-ddl schema.
+     */
     Schema : {
+	/**
+	 * A map of object models by simple name.
+	 */
 	models : {
 	    "" : "Model"
 	}
     },
+    /**
+     * A model represents a single kind of object within the schema. There is a
+     * 1:1 correspondence between Models and Java classes or JS type closures.
+     */
     Model : {
 	comment : "",
 	name : "",
 	properties : [ "Property" ]
     },
+    /**
+     * A property is a pair of a name and a type.
+     */
     Property : {
+	/**
+	 * This comment will be stored in this property.
+	 */
 	comment : "",
 	name : "",
 	type : "Type"
     },
+    /**
+     * This is a simplified type system, representing only the types of data
+     * that can be directly expressed in JSON.
+     */
     Type : {
 	name : "",
 	kind : "Kind",

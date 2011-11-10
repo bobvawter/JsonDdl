@@ -1,7 +1,13 @@
 package org.jsonddl.generator.model;
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-10T00:59:41")
+/**
+     * A property is a pair of a name and a type.
+     */
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-10T01:24:56")
 public class Property implements org.jsonddl.JsonDdlObject<Property> {
 private String comment;
+/**
+	 * This comment will be stored in this property.
+	 */
 public String getComment() {return comment;}
 private String name;
 public String getName() {return name;}

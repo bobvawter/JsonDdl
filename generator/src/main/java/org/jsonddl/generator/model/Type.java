@@ -1,5 +1,9 @@
 package org.jsonddl.generator.model;
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-10T00:59:41")
+/**
+     * This is a simplified type system, representing only the types of data
+     * that can be directly expressed in JSON.
+     */
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-10T01:24:56")
 public class Type implements org.jsonddl.JsonDdlObject<Type> {
 private String name;
 public String getName() {return name;}
