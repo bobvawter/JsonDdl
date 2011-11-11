@@ -11,6 +11,6 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-@org.jsonddl.GenerateFrom("example.json")
+@org.jsonddl.GenerateFrom("example.js")
 package org.jsonddl.test;
 

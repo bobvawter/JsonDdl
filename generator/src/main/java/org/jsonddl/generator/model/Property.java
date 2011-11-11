@@ -39,19 +39,19 @@ return new org.jsonddl.Context.SettableContext<Property>(null,this).traverse(vis
 public Builder builder() { return newInstance().from(this); }
 public Builder newInstance() { return new Builder(); }
 public void traverse(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Property> ctx) {
-if (org.jsonddl.VisitSupport.visit(visitor, this,ctx)) {
+if (org.jsonddl.impl.VisitSupport.visit(visitor, this,ctx)) {
 new org.jsonddl.Context.ImmutableContext<Type>("type", this.type).traverse(visitor);
 
 }
-org.jsonddl.VisitSupport.endVisit(visitor, this, ctx);
+org.jsonddl.impl.VisitSupport.endVisit(visitor, this, ctx);
 }
 public Property traverseMutable(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Property> ctx) {
 Builder builder = builder();
-if (org.jsonddl.VisitSupport.visit(visitor, this,ctx)) {
+if (org.jsonddl.impl.VisitSupport.visit(visitor, this,ctx)) {
 builder.withType(new org.jsonddl.Context.SettableContext<Type>("type", this.type).traverse(visitor));
 
 }
-org.jsonddl.VisitSupport.endVisit(visitor, this, ctx);
+org.jsonddl.impl.VisitSupport.endVisit(visitor, this, ctx);
 return builder.build();
 }
 }

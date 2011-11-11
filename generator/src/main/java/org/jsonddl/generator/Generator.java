@@ -40,12 +40,12 @@ import javax.annotation.Generated;
 import org.jsonddl.Context;
 import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
-import org.jsonddl.VisitSupport;
 import org.jsonddl.generator.model.Kind;
 import org.jsonddl.generator.model.Model;
 import org.jsonddl.generator.model.Property;
 import org.jsonddl.generator.model.Schema;
 import org.jsonddl.generator.model.Type;
+import org.jsonddl.impl.VisitSupport;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Parser;
@@ -102,7 +102,9 @@ public class Generator {
     Parser parser = new Parser(env);
     AstRoot root;
     try {
-      root = parser.parse(new InputStreamReader(schema), packageName, 0);
+      InputStreamReader sourceReader = new InputStreamReader(schema);
+      root = parser.parse(sourceReader, packageName, 0);
+      sourceReader.close();
     } catch (RhinoException e) {
       output.println("Could not parse input file: %s", e.getMessage());
       return false;

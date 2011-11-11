@@ -5,9 +5,12 @@
   <artifactId>parent</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
+  <name>Parent project</name>
   <modules>
     <module>jsonddl</module>
     <module>generator</module>
+    <module>processor</module>
+    <module>processor-test</module>
   </modules>
   <developers>
     <developer>
@@ -22,6 +25,15 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
   <build>
     <plugins>
       <plugin>

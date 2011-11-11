@@ -45,23 +45,23 @@ return new org.jsonddl.Context.SettableContext<Type>(null,this).traverse(visitor
 public Builder builder() { return newInstance().from(this); }
 public Builder newInstance() { return new Builder(); }
 public void traverse(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Type> ctx) {
-if (org.jsonddl.VisitSupport.visit(visitor, this,ctx)) {
+if (org.jsonddl.impl.VisitSupport.visit(visitor, this,ctx)) {
 new org.jsonddl.Context.ImmutableContext<Type>("listElement", this.listElement).traverse(visitor);
 new org.jsonddl.Context.ImmutableContext<Type>("mapKey", this.mapKey).traverse(visitor);
 new org.jsonddl.Context.ImmutableContext<Type>("mapValue", this.mapValue).traverse(visitor);
 
 }
-org.jsonddl.VisitSupport.endVisit(visitor, this, ctx);
+org.jsonddl.impl.VisitSupport.endVisit(visitor, this, ctx);
 }
 public Type traverseMutable(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Type> ctx) {
 Builder builder = builder();
-if (org.jsonddl.VisitSupport.visit(visitor, this,ctx)) {
+if (org.jsonddl.impl.VisitSupport.visit(visitor, this,ctx)) {
 builder.withListElement(new org.jsonddl.Context.SettableContext<Type>("listElement", this.listElement).traverse(visitor));
 builder.withMapKey(new org.jsonddl.Context.SettableContext<Type>("mapKey", this.mapKey).traverse(visitor));
 builder.withMapValue(new org.jsonddl.Context.SettableContext<Type>("mapValue", this.mapValue).traverse(visitor));
 
 }
-org.jsonddl.VisitSupport.endVisit(visitor, this, ctx);
+org.jsonddl.impl.VisitSupport.endVisit(visitor, this, ctx);
 return builder.build();
 }
 }

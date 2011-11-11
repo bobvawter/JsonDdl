@@ -32,19 +32,19 @@ return new org.jsonddl.Context.SettableContext<Schema>(null,this).traverse(visit
 public Builder builder() { return newInstance().from(this); }
 public Builder newInstance() { return new Builder(); }
 public void traverse(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Schema> ctx) {
-if (org.jsonddl.VisitSupport.visit(visitor, this,ctx)) {
+if (org.jsonddl.impl.VisitSupport.visit(visitor, this,ctx)) {
 new org.jsonddl.Context.ImmutableMapContext<Model>("models", this.models).traverse(visitor);
 
 }
-org.jsonddl.VisitSupport.endVisit(visitor, this, ctx);
+org.jsonddl.impl.VisitSupport.endVisit(visitor, this, ctx);
 }
 public Schema traverseMutable(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Schema> ctx) {
 Builder builder = builder();
-if (org.jsonddl.VisitSupport.visit(visitor, this,ctx)) {
+if (org.jsonddl.impl.VisitSupport.visit(visitor, this,ctx)) {
 builder.withModels(new org.jsonddl.Context.MapContext<Model>("models", this.models).traverse(visitor));
 
 }
-org.jsonddl.VisitSupport.endVisit(visitor, this, ctx);
+org.jsonddl.impl.VisitSupport.endVisit(visitor, this, ctx);
 return builder.build();
 }
 }

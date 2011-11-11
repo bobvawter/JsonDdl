@@ -41,8 +41,6 @@ var a = {
      * across runtimes.
      */
     "UsesJavaTypes" : {
-	// The generated type may implement extra interfaces
-	"implements" : "java.io.Serializable",
 	// Java types can use types in the implicit namespace
 	"anInteger" : "Integer",
 	// Or they can use fully-qualified type names

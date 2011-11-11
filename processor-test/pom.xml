@@ -6,14 +6,20 @@
     <groupId>org.jsonddl</groupId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>jsonddl</artifactId>
-  <name>Runtime support</name>
+  <artifactId>processor-test</artifactId>
+  <name>Smoke test for annotation processor</name>
 
   <dependencies>
     <dependency>
-      <groupId>org.json</groupId>
-      <artifactId>json</artifactId>
-      <version>20090211</version>
+      <groupId>org.jsonddl</groupId>
+      <artifactId>jsonddl</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jsonddl</groupId>
+      <artifactId>processor</artifactId>
+      <version>${project.version}</version>
+      <scope>compile-test</scope>
     </dependency>
   </dependencies>
 </project>
