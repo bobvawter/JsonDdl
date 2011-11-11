@@ -9,15 +9,19 @@
   <modules>
     <module>jsonddl</module>
     <module>generator</module>
+    <module>plugin</module>
+    <module>plugin-test</module>
     <module>processor</module>
     <module>processor-test</module>
   </modules>
+  
   <developers>
     <developer>
       <name>Robert W. Vawter III</name>
       <email>bob@vawter.org</email>
     </developer>
   </developers>
+  
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>

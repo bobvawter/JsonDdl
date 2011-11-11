@@ -14,12 +14,13 @@
       <groupId>org.jsonddl</groupId>
       <artifactId>jsonddl</artifactId>
       <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.jsonddl</groupId>
       <artifactId>processor</artifactId>
       <version>${project.version}</version>
-      <scope>compile-test</scope>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

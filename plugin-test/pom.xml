@@ -1,0 +1,40 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>parent</artifactId>
+    <groupId>org.jsonddl</groupId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+  <artifactId>jsonddl-maven-plugin-test</artifactId>
+  <packaging>jar</packaging>
+  <name>Smoke test for JsonDdl maven plugin</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jsonddl</groupId>
+      <artifactId>jsonddl</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.jsonddl</groupId>
+        <artifactId>jsonddl-maven-plugin</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <executions>
+          <execution>
+            <configuration>
+              <packageName>org.jsonddl.test</packageName>
+            </configuration>
+            <goals>
+              <goal>generate-test-sources</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

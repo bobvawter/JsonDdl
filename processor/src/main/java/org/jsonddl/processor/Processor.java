@@ -17,11 +17,10 @@ import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
 
-import org.jsonddl.GenerateFrom;
 import org.jsonddl.generator.Generator;
 import org.jsonddl.generator.Generator.Collector;
 
-@SupportedAnnotationTypes("org.jsonddl.GenerateFrom")
+@SupportedAnnotationTypes("org.jsonddl.processor.GenerateFrom")
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class Processor extends AbstractProcessor {
 
