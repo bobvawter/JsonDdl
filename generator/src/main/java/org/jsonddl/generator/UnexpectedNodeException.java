@@ -16,6 +16,8 @@ package org.jsonddl.generator;
 import org.mozilla.javascript.ast.AstNode;
 
 public class UnexpectedNodeException extends RuntimeException {
+  private static final long serialVersionUID = 796217485028764302L;
+
   public UnexpectedNodeException(AstNode node) {
     super("Unexpected node " + node.getClass().getSimpleName() + " at line " + node.getLineno());
   }

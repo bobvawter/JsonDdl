@@ -70,6 +70,21 @@ public class Generator {
     OutputStream writeImplementation(String packageName, String simpleName) throws IOException;
   }
 
+  class DdlTypeReplacer implements JsonDdlVisitor {
+    private Set<String> modelTypes;
+
+    public void endVisit(Type t, Context<Type> ctx) {
+      if (Kind.EXTERNAL.equals(t.getKind()) && modelTypes.contains(t.getName())) {
+        ctx.replace(t.builder().withKind(Kind.DDL).build());
+      }
+    }
+
+    public boolean visit(Schema s, Context<Schema> ctx) {
+      modelTypes = s.getModels().keySet();
+      return true;
+    }
+  }
+
   public static void main(String[] args) throws IOException {
     final File outputRoot = new File(args[2]);
     new Generator().generate(new FileInputStream(new File(args[0])), args[1], new Collector() {
@@ -136,21 +151,7 @@ public class Generator {
     }
     Date now = new Date();
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-    Schema s = new Schema.Builder().withModels(models).build()
-        .acceptMutable(new JsonDdlVisitor() {
-          private Set<String> modelTypes;
-
-          public void endVisit(Type t, Context<Type> ctx) {
-            if (Kind.EXTERNAL.equals(t.getKind()) && modelTypes.contains(t.getName())) {
-              ctx.replace(t.builder().withKind(Kind.DDL).build());
-            }
-          }
-
-          public boolean visit(Schema s, Context<Schema> ctx) {
-            modelTypes = s.getModels().keySet();
-            return true;
-          }
-        });
+    Schema s = new Schema.Builder().withModels(models).build().acceptMutable(new DdlTypeReplacer());
     for (Model model : s.getModels().values()) {
       String simpleName = model.getName();
 
@@ -320,11 +321,6 @@ public class Generator {
             .withKind(Kind.EXTERNAL)
             .withName("String")
             .build();
-      } else if (false /* ddlNames.contains(value) */) {
-        return new Type.Builder()
-            .withKind(Kind.DDL)
-            .withName(value)
-            .build();
       }
       return new Type.Builder().withKind(Kind.EXTERNAL).withName(value).build();
     }
@@ -332,7 +328,7 @@ public class Generator {
     if (name != null) {
       String id = name.getIdentifier();
       return new Type.Builder()
-          .withKind(false /* ddlNames.contains(id) */? Kind.DDL : Kind.EXTERNAL)
+          .withKind(Kind.EXTERNAL)
           .withName(id)
           .build();
     }
