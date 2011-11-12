@@ -13,169 +13,277 @@
  */
 package org.jsonddl;
 
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
-public abstract class Context<J extends JsonDdlObject<J>> {
-  public static class ImmutableContext<J extends JsonDdlObject<J>> extends Context<J> {
-    private final J value;
+import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
+import org.jsonddl.impl.VisitSupport;
 
-    public ImmutableContext(String property, J value) {
-      super(property);
-      this.value = value;
+public abstract class Context<J> {
+  public static class Builder<C extends Context<?> & Traversable<V>, V> {
+    protected C ctx;
+
+    Builder(C ctx) {
+      this.ctx = ctx;
     }
 
-    @Override
-    public J traverse(JsonDdlVisitor visitor) {
-      if (value != null) {
-        value.traverse(visitor, this);
-      }
-      return value;
-    }
-  }
-
-  public static class ImmutableListContext<J extends JsonDdlObject<J>> extends Context<J> {
-    private final List<J> list;
-    private ListIterator<J> it;
-
-    public ImmutableListContext(String property, List<J> list) {
-      super(property);
-      this.list = new ArrayList<J>(list);
-      it = list.listIterator();
+    public C build() {
+      C toReturn = ctx;
+      ctx = null;
+      return toReturn;
     }
 
-    @Override
-    public List<J> traverse(JsonDdlVisitor visitor) {
-      it = list.listIterator();
-      while (it.hasNext()) {
-        J value = it.next();
-        if (value != null) {
-          value.traverse(visitor, this);
-        }
-      }
-      return list;
+    public Builder<C, V> withMutability(boolean isMutable) {
+      ctx.mutable = isMutable;
+      return this;
+    }
+
+    public Builder<C, V> withProperty(String property) {
+      ctx.property = property;
+      return this;
+    }
+
+    public Builder<C, V> withValue(V value) {
+      ctx.setValue(value);
+      return this;
     }
   }
 
-  public static class ImmutableMapContext<J extends JsonDdlObject<J>> extends Context<J> {
-    private Map<String, J> map;
-
-    public ImmutableMapContext(String property, Map<String, J> map) {
-      super(property);
-      this.map = map;
-    }
-
-    @Override
-    public Map<String, J> traverse(JsonDdlVisitor visitor) {
-      if (map != null) {
-        for (Map.Entry<String, J> entry : map.entrySet()) {
-          new Context.ImmutableContext<J>(getProperty(), entry.getValue());
-        }
+  /**
+   * Allows traversal of a {@link List} of {@link JsonDdlObject} instances.
+   */
+  public static class ListContext<J extends JsonDdlObject<J>> extends PropertyContext<J, List<J>> {
+    public static class Builder<J extends JsonDdlObject<J>> extends
+        Context.Builder<ListContext<J>, List<J>> {
+      public Builder() {
+        super(new ListContext<J>());
       }
-      return map;
     }
-  }
 
-  public static class ListContext<J extends JsonDdlObject<J>> extends Context<J> {
-    private final List<J> list;
-    private ListIterator<J> it;
     private boolean didReplace;
+    private ListIterator<J> it;
 
-    public ListContext(String property, List<J> list) {
-      super(property);
-      this.list = new ArrayList<J>(list);
-      it = list.listIterator();
-    }
+    ListContext() {}
 
     @Override
     public void insertAfter(J next) {
-      it.add(next);
+      if (isMutable()) {
+        it.add(next);
+      } else {
+        super.insertAfter(next);
+      }
     }
 
     @Override
     public void insertBefore(J previous) {
-      int current = it.previousIndex() + 1;
-      list.add(current, previous);
-      it = list.listIterator(current + 1);
+      if (isMutable()) {
+        int current = it.previousIndex() + 1;
+        value.add(current, previous);
+        it = value.listIterator(current + 1);
+      } else {
+        super.insertBefore(previous);
+      }
     }
 
     @Override
     public void replace(J replacement) {
-      didReplace = true;
-      it.set(replacement);
+      if (isMutable()) {
+        didReplace = true;
+        it.set(replacement);
+      } else {
+        super.replace(replacement);
+      }
     }
 
     @Override
-    public List<J> traverse(JsonDdlVisitor visitor) {
-      it = list.listIterator();
+    protected void doTraverse(JsonDdlVisitor visitor) {
+      it = value.listIterator();
       while (it.hasNext()) {
-        J value = it.next();
         didReplace = false;
-        if (value != null) {
-          J temp = value.traverseMutable(visitor, this);
-          if (!didReplace) {
-            replace(temp);
-          }
+        J temp = new ObjectContext.Builder<J>()
+            .withValue(it.next())
+            .withProperty(getProperty())
+            .withMutability(isMutable())
+            .build().traverse(visitor);
+        if (isMutable() && !didReplace) {
+          it.set(temp);
         }
       }
-      return list;
     }
   }
 
-  public static class MapContext<J extends JsonDdlObject<J>> extends Context<J> {
-    private Map<String, J> map;
+  public static class MapContext<J extends JsonDdlObject<J>> extends
+      PropertyContext<J, Map<String, J>> {
+    public static class Builder<J extends JsonDdlObject<J>> extends
+        Context.Builder<MapContext<J>, Map<String, J>> {
+      public Builder() {
+        super(new MapContext<J>());
+      }
+    }
 
-    public MapContext(String property, Map<String, J> map) {
-      super(property);
-      this.map = map;
+    private Map.Entry<String, J> currentEntry;
+    private boolean didReplace;
+    private Iterator<Map.Entry<String, J>> it;
+
+    MapContext() {}
+
+    @Override
+    public void remove() {
+      if (isMutable()) {
+        it.remove();
+      } else {
+        super.remove();
+      }
     }
 
     @Override
-    public Map<String, J> traverse(JsonDdlVisitor visitor) {
-      if (map != null) {
-        for (Map.Entry<String, J> entry : map.entrySet()) {
-          entry.setValue(new Context.SettableContext<J>(getProperty(), entry.getValue())
-              .traverse(visitor));
+    public void replace(J replacement) {
+      if (isMutable()) {
+        didReplace = true;
+        currentEntry.setValue(replacement);
+      } else {
+        super.replace(replacement);
+      }
+    }
+
+    @Override
+    protected void doTraverse(JsonDdlVisitor visitor) {
+      it = value.entrySet().iterator();
+      while (it.hasNext()) {
+        currentEntry = it.next();
+        J value = new ObjectContext.Builder<J>()
+              .withValue(currentEntry.getValue())
+              .withProperty(getProperty())
+              .withMutability(isMutable())
+              .build().traverse(visitor);
+        if (isMutable() && !didReplace) {
+          currentEntry.setValue(value);
         }
       }
-      return map;
     }
   }
 
-  public static class SettableContext<J extends JsonDdlObject<J>> extends Context<J> {
-    private boolean didReplace;
-    private J value;
+  /**
+   * Allows the traversal of a single {@link JsonDdlObject}.
+   */
+  public static class ObjectContext<J extends JsonDdlObject<J>> extends ValueContext<J> {
+    public static class Builder<J extends JsonDdlObject<J>> extends ValueContext.Builder<J> {
+      public Builder() {
+        super(new ObjectContext<J>());
+      }
+    }
 
-    public SettableContext(String property, J value) {
-      super(property);
+    ObjectContext() {}
+
+    @Override
+    public void doTraverse(JsonDdlVisitor visitor) {
+      if (VisitSupport.visit(visitor, value, this)) {
+        if (isMutable()) {
+          J temp = value.traverseMutable(visitor);
+          if (!didChange) {
+            value = temp;
+          }
+        } else {
+          value.traverse(visitor);
+        }
+      }
+      VisitSupport.endVisit(visitor, value, this);
+    }
+  }
+
+  /**
+   * Contains a single value that may be replaced, but does not provide any traversal.
+   */
+  public static class ValueContext<T> extends PropertyContext<T, T> {
+    public static class Builder<T> extends Context.Builder<ValueContext<T>, T> {
+      public Builder() {
+        this(new ValueContext<T>());
+      }
+
+      public Builder(ValueContext<T> ctx) {
+        super(ctx);
+      }
+    }
+
+    protected boolean didChange;
+
+    ValueContext() {}
+
+    public T getValue() {
+      return value;
+    }
+
+    @Override
+    public void replace(T replacement) {
+      if (isMutable()) {
+        didChange = true;
+        value = replacement;
+      } else {
+        super.replace(replacement);
+      }
+    }
+
+    @Override
+    protected void doTraverse(JsonDdlVisitor visitor) {}
+  }
+
+  /**
+   * Allows the traversal of a single property. This method will dispatch to the optional
+   * {@link PropertyVisitor} interface methods.
+   */
+  static abstract class PropertyContext<J, T> extends Context<J> implements Traversable<T> {
+    protected T value;
+
+    @Override
+    public final void setValue(T value) {
       this.value = value;
     }
 
     @Override
-    public void replace(J replacement) {
-      didReplace = true;
-      value = replacement;
-    }
+    public final T traverse(JsonDdlVisitor visitor) {
+      if (visitor instanceof PropertyVisitor) {
+        // Create a ValueContext to hold the replacement
+        org.jsonddl.Context.ValueContext<T> ctx =
+            new ValueContext.Builder<T>()
+                .withMutability(isMutable())
+                .withProperty(getProperty())
+                .withValue(value)
+                .build();
 
-    @Override
-    public J traverse(JsonDdlVisitor visitor) {
-      if (value != null) {
-        J temp = value.traverseMutable(visitor, this);
-        if (!didReplace) {
-          value = temp;
+        // Allow the PropertyVisitor to replace the value, then visit the (replaced) value
+        if (((PropertyVisitor) visitor).visitProperty(value, ctx)) {
+          value = ctx.getValue();
+          if (value != null) {
+            doTraverse(visitor);
+          }
         }
+        ((PropertyVisitor) visitor).endVisitProperty(value, ctx);
+        value = ctx.getValue();
+      } else if (value != null) {
+        doTraverse(visitor);
       }
       return value;
     }
+
+    protected abstract void doTraverse(JsonDdlVisitor visitor);
+
   }
 
-  private final String property;
+  interface Traversable<T> {
+    void setValue(T value);
 
-  protected Context(String property) {
-    this.property = property;
+    /**
+     * Returns the value of the context after traversal is complete.
+     */
+    T traverse(JsonDdlVisitor visitor);
   }
+
+  private boolean mutable;
+  private String property;
+
+  Context() {}
 
   public String getProperty() {
     return property;
@@ -197,8 +305,7 @@ public abstract class Context<J extends JsonDdlObject<J>> {
     throw new UnsupportedOperationException();
   }
 
-  /**
-   * Returns the value of the context after traversal is complete.
-   */
-  public abstract Object traverse(JsonDdlVisitor visitor);
+  protected boolean isMutable() {
+    return mutable;
+  }
 }

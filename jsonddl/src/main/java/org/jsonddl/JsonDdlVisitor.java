@@ -13,4 +13,16 @@
  */
 package org.jsonddl;
 
-public interface JsonDdlVisitor {}
+/**
+ * Indicates that an object conforms to the following protocol.
+ */
+public interface JsonDdlVisitor {
+  /**
+   * Optional capability interface for visitors that wish to consume object properties dynamically.
+   */
+  public interface PropertyVisitor extends JsonDdlVisitor {
+    <T> void endVisitProperty(T value, Context<T> ctx);
+
+    <T> boolean visitProperty(T value, Context<T> ctx);
+  }
+}

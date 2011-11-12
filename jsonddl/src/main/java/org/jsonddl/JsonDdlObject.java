@@ -37,7 +37,7 @@ public interface JsonDdlObject<J extends JsonDdlObject<J>> {
   //
   // String toJson();
   //
-  void traverse(JsonDdlVisitor visitor, Context<J> ctx);
+  void traverse(JsonDdlVisitor visitor);
 
-  J traverseMutable(JsonDdlVisitor visitor, Context<J> ctx);
+  J traverseMutable(JsonDdlVisitor visitor);
 }

@@ -3,7 +3,7 @@ package org.jsonddl.generator.model;
      * A Schema is the top-level object that encapsulates the normalized form of
      * a json-ddl schema.
      */
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-10T01:24:56")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-12T13:46:35")
 public class Schema implements org.jsonddl.JsonDdlObject<Schema> {
 private java.util.Map<String,Model> models;
 /**
@@ -24,27 +24,30 @@ return this;}
 }
 private Schema(){}
 public void accept(org.jsonddl.JsonDdlVisitor visitor) {
-new org.jsonddl.Context.ImmutableContext<Schema>(null,this).traverse(visitor);
+new org.jsonddl.Context.ObjectContext.Builder<Schema>().withValue(this).build().traverse(visitor);
 }
 public Schema acceptMutable(org.jsonddl.JsonDdlVisitor visitor) {
-return new org.jsonddl.Context.SettableContext<Schema>(null,this).traverse(visitor);
+return new org.jsonddl.Context.ObjectContext.Builder<Schema>().withValue(this).withMutability(true).build().traverse(visitor);
 }
 public Builder builder() { return newInstance().from(this); }
 public Builder newInstance() { return new Builder(); }
-public void traverse(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Schema> ctx) {
-if (org.jsonddl.impl.VisitSupport.visit(visitor, this,ctx)) {
-new org.jsonddl.Context.ImmutableMapContext<Model>("models", this.models).traverse(visitor);
+public void traverse(org.jsonddl.JsonDdlVisitor visitor) {
+new org.jsonddl.Context.MapContext.Builder<Model>()
+.withMutability(false)
+.withProperty("models")
+.withValue(this.models)
+.build().traverse(visitor);
 
 }
-org.jsonddl.impl.VisitSupport.endVisit(visitor, this, ctx);
-}
-public Schema traverseMutable(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Schema> ctx) {
-Builder builder = builder();
-if (org.jsonddl.impl.VisitSupport.visit(visitor, this,ctx)) {
-builder.withModels(new org.jsonddl.Context.MapContext<Model>("models", this.models).traverse(visitor));
+public Schema traverseMutable(org.jsonddl.JsonDdlVisitor visitor) {
+Builder builder = newInstance();
+builder.withModels(
+new org.jsonddl.Context.MapContext.Builder<Model>()
+.withMutability(true)
+.withProperty("models")
+.withValue(this.models)
+.build().traverse(visitor));
 
-}
-org.jsonddl.impl.VisitSupport.endVisit(visitor, this, ctx);
 return builder.build();
 }
 }

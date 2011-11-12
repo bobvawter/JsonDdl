@@ -2,32 +2,22 @@ package org.jsonddl.generator.model;
 
 import org.jsonddl.Context;
 
-@SuppressWarnings("rawtypes")
 public enum Kind {
-  DDL(Context.ImmutableContext.class, Context.SettableContext.class),
-  EXTERNAL,
-  LIST(Context.ImmutableListContext.class, Context.ListContext.class),
-  MAP(Context.ImmutableMapContext.class, Context.MapContext.class),
-  PRIMITIVE;
+  BOOLEAN(Context.ValueContext.Builder.class),
+  DDL(Context.ObjectContext.Builder.class),
+  DOUBLE(Context.ValueContext.Builder.class),
+  EXTERNAL(Context.ValueContext.Builder.class),
+  INTEGER(Context.ValueContext.Builder.class),
+  LIST(Context.ListContext.Builder.class),
+  MAP(Context.MapContext.Builder.class);
 
-  private final Class<? extends Context> immutable;
-  private final Class<? extends Context> mutable;
+  private final Class<?> builder;
 
-  private Kind() {
-    this.immutable = null;
-    this.mutable = null;
+  private Kind(Class<?> builder) {
+    this.builder = builder;
   }
 
-  private Kind(Class<? extends Context> immutable, Class<? extends Context> mutable) {
-    this.immutable = immutable;
-    this.mutable = mutable;
-  }
-
-  public Class<? extends Context> getImmutableContextType() {
-    return immutable;
-  }
-
-  public Class<? extends Context> getMutableContextType() {
-    return mutable;
+  public Class<?> getContextBuilderType() {
+    return builder;
   }
 }

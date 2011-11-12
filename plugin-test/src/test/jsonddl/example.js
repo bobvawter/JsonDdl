@@ -45,7 +45,7 @@ var a = {
 	"anInteger" : "Integer",
 	// Or they can use fully-qualified type names
 	"aUUID" : "java.util.UUID",
-	// Primitive types are declared using the type's name
-	"aLong" : "long"
+	// Primitive types are declared using the type's boxed form
+	"aLong" : "Long"
     }
 }

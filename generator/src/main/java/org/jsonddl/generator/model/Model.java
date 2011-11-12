@@ -3,7 +3,7 @@ package org.jsonddl.generator.model;
      * A model represents a single kind of object within the schema. There is a
      * 1:1 correspondence between Models and Java classes or JS type closures.
      */
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-10T01:24:56")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-12T13:46:35")
 public class Model implements org.jsonddl.JsonDdlObject<Model> {
 private String comment;
 public String getComment() {return comment;}
@@ -29,27 +29,52 @@ return this;}
 }
 private Model(){}
 public void accept(org.jsonddl.JsonDdlVisitor visitor) {
-new org.jsonddl.Context.ImmutableContext<Model>(null,this).traverse(visitor);
+new org.jsonddl.Context.ObjectContext.Builder<Model>().withValue(this).build().traverse(visitor);
 }
 public Model acceptMutable(org.jsonddl.JsonDdlVisitor visitor) {
-return new org.jsonddl.Context.SettableContext<Model>(null,this).traverse(visitor);
+return new org.jsonddl.Context.ObjectContext.Builder<Model>().withValue(this).withMutability(true).build().traverse(visitor);
 }
 public Builder builder() { return newInstance().from(this); }
 public Builder newInstance() { return new Builder(); }
-public void traverse(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Model> ctx) {
-if (org.jsonddl.impl.VisitSupport.visit(visitor, this,ctx)) {
-new org.jsonddl.Context.ImmutableListContext<Property>("properties", this.properties).traverse(visitor);
+public void traverse(org.jsonddl.JsonDdlVisitor visitor) {
+new org.jsonddl.Context.ValueContext.Builder<String>()
+.withMutability(false)
+.withProperty("comment")
+.withValue(this.comment)
+.build().traverse(visitor);
+new org.jsonddl.Context.ValueContext.Builder<String>()
+.withMutability(false)
+.withProperty("name")
+.withValue(this.name)
+.build().traverse(visitor);
+new org.jsonddl.Context.ListContext.Builder<Property>()
+.withMutability(false)
+.withProperty("properties")
+.withValue(this.properties)
+.build().traverse(visitor);
 
 }
-org.jsonddl.impl.VisitSupport.endVisit(visitor, this, ctx);
-}
-public Model traverseMutable(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Model> ctx) {
-Builder builder = builder();
-if (org.jsonddl.impl.VisitSupport.visit(visitor, this,ctx)) {
-builder.withProperties(new org.jsonddl.Context.ListContext<Property>("properties", this.properties).traverse(visitor));
+public Model traverseMutable(org.jsonddl.JsonDdlVisitor visitor) {
+Builder builder = newInstance();
+builder.withComment(
+new org.jsonddl.Context.ValueContext.Builder<String>()
+.withMutability(true)
+.withProperty("comment")
+.withValue(this.comment)
+.build().traverse(visitor));
+builder.withName(
+new org.jsonddl.Context.ValueContext.Builder<String>()
+.withMutability(true)
+.withProperty("name")
+.withValue(this.name)
+.build().traverse(visitor));
+builder.withProperties(
+new org.jsonddl.Context.ListContext.Builder<Property>()
+.withMutability(true)
+.withProperty("properties")
+.withValue(this.properties)
+.build().traverse(visitor));
 
-}
-org.jsonddl.impl.VisitSupport.endVisit(visitor, this, ctx);
 return builder.build();
 }
 }

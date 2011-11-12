@@ -13,8 +13,6 @@
  */
 package org.jsonddl.generator;
 
-import static org.jsonddl.generator.TypeAnswers.canTraverse;
-import static org.jsonddl.generator.TypeAnswers.getContextParameterization;
 import static org.jsonddl.generator.TypeAnswers.getQualifiedSourceName;
 
 import java.io.File;
@@ -45,7 +43,6 @@ import org.jsonddl.generator.model.Model;
 import org.jsonddl.generator.model.Property;
 import org.jsonddl.generator.model.Schema;
 import org.jsonddl.generator.model.Type;
-import org.jsonddl.impl.VisitSupport;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Parser;
@@ -212,17 +209,8 @@ public class Generator {
 
         from.println("with" + getterName + "(from.get" + getterName + "());");
 
-        if (canTraverse(type)) {
-          String contextArgs = "<" + getContextParameterization(type) + ">(\"" + propName
-            + "\", this."
-            + propName + ").traverse(visitor)";
-          String traverseCall = "new "
-            + type.getKind().getImmutableContextType().getCanonicalName() + contextArgs;
-          traverse.println(traverseCall + ";");
-          traverseCall = "new " + type.getKind().getMutableContextType().getCanonicalName()
-            + contextArgs;
-          traverseMutable.println("builder.with" + getterName + "(" + traverseCall + ");");
-        }
+        writeTraversalForProperty(traverse, propName, getterName, type, false);
+        writeTraversalForProperty(traverseMutable, propName, getterName, type, true);
       }
       builder.println("public Builder from(" + simpleName + " from) {");
       builder.append(fromContents.getBuffer());
@@ -234,38 +222,32 @@ public class Generator {
       out.println("private " + simpleName + "(){}");
 
       out.println("public void accept(" + JsonDdlVisitor.class.getCanonicalName() + " visitor) {");
-      out.println("new " + Context.ImmutableContext.class.getCanonicalName() + "<" + simpleName
-        + ">(null,this).traverse(visitor);");
+      out.println("new " + Context.ObjectContext.Builder.class.getCanonicalName() + "<"
+        + simpleName
+        + ">().withValue(this).build().traverse(visitor);");
       out.println("}");
 
       out.println("public " + simpleName + " acceptMutable("
         + JsonDdlVisitor.class.getCanonicalName()
         + " visitor) {");
-      out.println("return new " + Context.SettableContext.class.getCanonicalName() + "<"
+      out.println("return new " + Context.ObjectContext.Builder.class.getCanonicalName() + "<"
         + simpleName
-        + ">(null,this).traverse(visitor);");
+          + ">().withValue(this).withMutability(true).build().traverse(visitor);");
       out.println("}");
 
       out.println("public Builder builder() { return newInstance().from(this); }");
       out.println("public Builder newInstance() { return new Builder(); }");
 
       out.println("public void traverse(" + JsonDdlVisitor.class.getCanonicalName()
-        + " visitor, "
-        + Context.class.getCanonicalName() + "<" + simpleName + "> ctx) {");
-      out.println("if (" + VisitSupport.class.getCanonicalName() + ".visit(visitor, this,ctx)) {");
+        + " visitor) {");
       out.println(traverseContents.getBuffer());
-      out.println("}");
-      out.println(VisitSupport.class.getCanonicalName() + ".endVisit(visitor, this, ctx);");
       out.println("}");
 
       out.println("public " + simpleName + " traverseMutable("
         + JsonDdlVisitor.class.getCanonicalName()
-        + " visitor, " + Context.class.getCanonicalName() + "<" + simpleName + "> ctx) {");
-      out.println("Builder builder = builder();");
-      out.println("if (" + VisitSupport.class.getCanonicalName() + ".visit(visitor, this,ctx)) {");
+        + " visitor) {");
+      out.println("Builder builder = newInstance();");
       out.println(traverseMutableContents.getBuffer());
-      out.println("}");
-      out.println(VisitSupport.class.getCanonicalName() + ".endVisit(visitor, this, ctx);");
       out.println("return builder.build();");
       out.println("}");
 
@@ -347,8 +329,8 @@ public class Generator {
     KeywordLiteral keyword = castOrNull(KeywordLiteral.class, node);
     if (keyword != null && keyword.isBooleanLiteral()) {
       return new Type.Builder()
-          .withKind(Kind.PRIMITIVE)
-          .withName(forceBoxed ? "Boolean" : "boolean")
+          .withKind(Kind.BOOLEAN)
+          // .withName(forceBoxed ? "Boolean" : "boolean")
           .build();
     }
 
@@ -357,13 +339,13 @@ public class Generator {
       double d = num.getNumber();
       if (Math.round(d) == d) {
         return new Type.Builder()
-            .withKind(Kind.PRIMITIVE)
-            .withName(forceBoxed ? "Integer" : "int")
+            .withKind(Kind.INTEGER)
+            // .withName(forceBoxed ? "Integer" : "int")
             .build();
       } else {
         return new Type.Builder()
-            .withKind(Kind.PRIMITIVE)
-            .withName(forceBoxed ? "Double" : "double")
+            .withKind(Kind.DOUBLE)
+            // .withName(forceBoxed ? "Double" : "double")
             .build();
       }
     }
@@ -381,5 +363,21 @@ public class Generator {
     }
 
     throw new UnexpectedNodeException(node);
+  }
+
+  private void writeTraversalForProperty(PrintWriter pw, String propertyName, String getterName,
+      Type type, boolean mutable) {
+    if (mutable) {
+      pw.println("builder.with" + getterName + "(");
+    }
+    pw.println("new " + TypeAnswers.getContextBuilderDeclaration(type) + "()");
+    pw.println(".withMutability(" + mutable + ")");
+    pw.println(".withProperty(\"" + propertyName + "\")");
+    pw.println(".withValue(this." + propertyName + ")");
+    pw.print(".build().traverse(visitor)");
+    if (mutable) {
+      pw.print(")");
+    }
+    pw.println(";");
   }
 }

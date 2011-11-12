@@ -4,37 +4,56 @@ import org.jsonddl.generator.model.Kind;
 import org.jsonddl.generator.model.Type;
 
 class TypeAnswers {
-  public static boolean canTraverse(Type type) {
-    switch (type.getKind()) {
-      case DDL:
-        return true;
-      case LIST:
-        return Kind.DDL.equals(type.getListElement().getKind());
-      case MAP:
-        return Kind.EXTERNAL.equals(type.getMapKey().getKind())
-          && "String".equals(type.getMapKey().getName())
-          && Kind.DDL.equals(type.getMapValue().getKind());
+  public static String getContextBuilderDeclaration(Type type) {
+    StringBuilder sb = new StringBuilder();
+    Class<?> contextBuilderType = getContextBuilderType(type);
+    sb.append(contextBuilderType.getCanonicalName());
+    sb.append("<");
+    if (Kind.EXTERNAL.getContextBuilderType().equals(contextBuilderType)) {
+      sb.append(getQualifiedSourceName(type));
+    } else {
+      sb.append(getContextParameterization(type));
     }
-    return false;
+    sb.append(">");
+    return sb.toString();
+  }
+
+  public static Class<?> getContextBuilderType(Type type) {
+    switch (type.getKind()) {
+      case LIST:
+        if (Kind.DDL.equals(type.getListElement().getKind())) {
+          return Kind.LIST.getContextBuilderType();
+        }
+        return Kind.EXTERNAL.getContextBuilderType();
+      case MAP:
+        if (Kind.DDL.equals(type.getMapValue().getKind())) {
+          return Kind.MAP.getContextBuilderType();
+        }
+        return Kind.EXTERNAL.getContextBuilderType();
+    }
+    return type.getKind().getContextBuilderType();
   }
 
   public static String getContextParameterization(Type type) {
     switch (type.getKind()) {
-      case DDL:
-        return type.getName();
       case LIST:
         return type.getListElement().getName();
       case MAP:
         return type.getMapValue().getName();
     }
-    throw new IllegalStateException();
+    return getQualifiedSourceName(type);
   }
 
   public static String getQualifiedSourceName(Type type) {
     switch (type.getKind()) {
+      case BOOLEAN:
+        return "Boolean";
+      case DOUBLE:
+        return "Double";
+      case INTEGER:
+        return "Integer";
       case DDL:
       case EXTERNAL:
-      case PRIMITIVE:
         return type.getName();
       case LIST:
         return String.format("java.util.List<%s>", getQualifiedSourceName(type.getListElement()));

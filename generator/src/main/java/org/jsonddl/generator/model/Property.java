@@ -2,7 +2,7 @@ package org.jsonddl.generator.model;
 /**
      * A property is a pair of a name and a type.
      */
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-10T01:24:56")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-12T13:46:35")
 public class Property implements org.jsonddl.JsonDdlObject<Property> {
 private String comment;
 /**
@@ -31,27 +31,52 @@ return this;}
 }
 private Property(){}
 public void accept(org.jsonddl.JsonDdlVisitor visitor) {
-new org.jsonddl.Context.ImmutableContext<Property>(null,this).traverse(visitor);
+new org.jsonddl.Context.ObjectContext.Builder<Property>().withValue(this).build().traverse(visitor);
 }
 public Property acceptMutable(org.jsonddl.JsonDdlVisitor visitor) {
-return new org.jsonddl.Context.SettableContext<Property>(null,this).traverse(visitor);
+return new org.jsonddl.Context.ObjectContext.Builder<Property>().withValue(this).withMutability(true).build().traverse(visitor);
 }
 public Builder builder() { return newInstance().from(this); }
 public Builder newInstance() { return new Builder(); }
-public void traverse(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Property> ctx) {
-if (org.jsonddl.impl.VisitSupport.visit(visitor, this,ctx)) {
-new org.jsonddl.Context.ImmutableContext<Type>("type", this.type).traverse(visitor);
+public void traverse(org.jsonddl.JsonDdlVisitor visitor) {
+new org.jsonddl.Context.ValueContext.Builder<String>()
+.withMutability(false)
+.withProperty("comment")
+.withValue(this.comment)
+.build().traverse(visitor);
+new org.jsonddl.Context.ValueContext.Builder<String>()
+.withMutability(false)
+.withProperty("name")
+.withValue(this.name)
+.build().traverse(visitor);
+new org.jsonddl.Context.ObjectContext.Builder<Type>()
+.withMutability(false)
+.withProperty("type")
+.withValue(this.type)
+.build().traverse(visitor);
 
 }
-org.jsonddl.impl.VisitSupport.endVisit(visitor, this, ctx);
-}
-public Property traverseMutable(org.jsonddl.JsonDdlVisitor visitor, org.jsonddl.Context<Property> ctx) {
-Builder builder = builder();
-if (org.jsonddl.impl.VisitSupport.visit(visitor, this,ctx)) {
-builder.withType(new org.jsonddl.Context.SettableContext<Type>("type", this.type).traverse(visitor));
+public Property traverseMutable(org.jsonddl.JsonDdlVisitor visitor) {
+Builder builder = newInstance();
+builder.withComment(
+new org.jsonddl.Context.ValueContext.Builder<String>()
+.withMutability(true)
+.withProperty("comment")
+.withValue(this.comment)
+.build().traverse(visitor));
+builder.withName(
+new org.jsonddl.Context.ValueContext.Builder<String>()
+.withMutability(true)
+.withProperty("name")
+.withValue(this.name)
+.build().traverse(visitor));
+builder.withType(
+new org.jsonddl.Context.ObjectContext.Builder<Type>()
+.withMutability(true)
+.withProperty("type")
+.withValue(this.type)
+.build().traverse(visitor));
 
-}
-org.jsonddl.impl.VisitSupport.endVisit(visitor, this, ctx);
 return builder.build();
 }
 }
