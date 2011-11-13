@@ -17,6 +17,20 @@ package org.jsonddl;
  * Indicates that an object conforms to the following protocol.
  */
 public interface JsonDdlVisitor {
+  public interface Context<J> {
+
+    String getProperty();
+
+    void insertAfter(J next);
+
+    void insertBefore(J previous);
+
+    void remove();
+
+    void replace(J replacement);
+
+  }
+
   /**
    * Optional capability interface for visitors that wish to consume object properties dynamically.
    */

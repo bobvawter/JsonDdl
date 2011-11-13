@@ -35,7 +35,6 @@ import java.util.TreeMap;
 
 import javax.annotation.Generated;
 
-import org.jsonddl.Context;
 import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.generator.model.Kind;
@@ -43,6 +42,7 @@ import org.jsonddl.generator.model.Model;
 import org.jsonddl.generator.model.Property;
 import org.jsonddl.generator.model.Schema;
 import org.jsonddl.generator.model.Type;
+import org.jsonddl.impl.ContextImpl;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Parser;
@@ -222,7 +222,7 @@ public class Generator {
       out.println("private " + simpleName + "(){}");
 
       out.println("public void accept(" + JsonDdlVisitor.class.getCanonicalName() + " visitor) {");
-      out.println("new " + Context.ObjectContext.Builder.class.getCanonicalName() + "<"
+      out.println("new " + ContextImpl.ObjectContext.Builder.class.getCanonicalName() + "<"
         + simpleName
         + ">().withValue(this).build().traverse(visitor);");
       out.println("}");
@@ -230,7 +230,7 @@ public class Generator {
       out.println("public " + simpleName + " acceptMutable("
         + JsonDdlVisitor.class.getCanonicalName()
         + " visitor) {");
-      out.println("return new " + Context.ObjectContext.Builder.class.getCanonicalName() + "<"
+      out.println("return new " + ContextImpl.ObjectContext.Builder.class.getCanonicalName() + "<"
         + simpleName
           + ">().withValue(this).withMutability(true).build().traverse(visitor);");
       out.println("}");

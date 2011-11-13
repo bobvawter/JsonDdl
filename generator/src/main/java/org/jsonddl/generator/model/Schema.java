@@ -24,15 +24,15 @@ return this;}
 }
 private Schema(){}
 public void accept(org.jsonddl.JsonDdlVisitor visitor) {
-new org.jsonddl.Context.ObjectContext.Builder<Schema>().withValue(this).build().traverse(visitor);
+new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Schema>().withValue(this).build().traverse(visitor);
 }
 public Schema acceptMutable(org.jsonddl.JsonDdlVisitor visitor) {
-return new org.jsonddl.Context.ObjectContext.Builder<Schema>().withValue(this).withMutability(true).build().traverse(visitor);
+return new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Schema>().withValue(this).withMutability(true).build().traverse(visitor);
 }
 public Builder builder() { return newInstance().from(this); }
 public Builder newInstance() { return new Builder(); }
 public void traverse(org.jsonddl.JsonDdlVisitor visitor) {
-new org.jsonddl.Context.MapContext.Builder<Model>()
+new org.jsonddl.impl.ContextImpl.MapContext.Builder<Model>()
 .withMutability(false)
 .withProperty("models")
 .withValue(this.models)
@@ -42,7 +42,7 @@ new org.jsonddl.Context.MapContext.Builder<Model>()
 public Schema traverseMutable(org.jsonddl.JsonDdlVisitor visitor) {
 Builder builder = newInstance();
 builder.withModels(
-new org.jsonddl.Context.MapContext.Builder<Model>()
+new org.jsonddl.impl.ContextImpl.MapContext.Builder<Model>()
 .withMutability(true)
 .withProperty("models")
 .withValue(this.models)

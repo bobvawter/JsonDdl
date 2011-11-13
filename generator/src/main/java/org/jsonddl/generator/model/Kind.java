@@ -1,15 +1,15 @@
 package org.jsonddl.generator.model;
 
-import org.jsonddl.Context;
+import org.jsonddl.impl.ContextImpl;
 
 public enum Kind {
-  BOOLEAN(Context.ValueContext.Builder.class),
-  DDL(Context.ObjectContext.Builder.class),
-  DOUBLE(Context.ValueContext.Builder.class),
-  EXTERNAL(Context.ValueContext.Builder.class),
-  INTEGER(Context.ValueContext.Builder.class),
-  LIST(Context.ListContext.Builder.class),
-  MAP(Context.MapContext.Builder.class);
+  BOOLEAN(ContextImpl.ValueContext.Builder.class),
+  DDL(ContextImpl.ObjectContext.Builder.class),
+  DOUBLE(ContextImpl.ValueContext.Builder.class),
+  EXTERNAL(ContextImpl.ValueContext.Builder.class),
+  INTEGER(ContextImpl.ValueContext.Builder.class),
+  LIST(ContextImpl.ListContext.Builder.class),
+  MAP(ContextImpl.MapContext.Builder.class);
 
   private final Class<?> builder;
 

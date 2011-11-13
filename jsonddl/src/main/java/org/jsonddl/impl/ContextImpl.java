@@ -11,18 +11,20 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.jsonddl;
+package org.jsonddl.impl;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
+import org.jsonddl.JsonDdlObject;
+import org.jsonddl.JsonDdlVisitor;
+import org.jsonddl.JsonDdlVisitor.Context;
 import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
-import org.jsonddl.impl.VisitSupport;
 
-public abstract class Context<J> {
-  public static class Builder<C extends Context<?> & Traversable<V>, V> {
+public abstract class ContextImpl<J> implements Context<J> {
+  public static class Builder<C extends ContextImpl<?> & Traversable<V>, V> {
     protected C ctx;
 
     Builder(C ctx) {
@@ -56,7 +58,7 @@ public abstract class Context<J> {
    */
   public static class ListContext<J extends JsonDdlObject<J>> extends PropertyContext<J, List<J>> {
     public static class Builder<J extends JsonDdlObject<J>> extends
-        Context.Builder<ListContext<J>, List<J>> {
+        ContextImpl.Builder<ListContext<J>, List<J>> {
       public Builder() {
         super(new ListContext<J>());
       }
@@ -117,7 +119,7 @@ public abstract class Context<J> {
   public static class MapContext<J extends JsonDdlObject<J>> extends
       PropertyContext<J, Map<String, J>> {
     public static class Builder<J extends JsonDdlObject<J>> extends
-        Context.Builder<MapContext<J>, Map<String, J>> {
+        ContextImpl.Builder<MapContext<J>, Map<String, J>> {
       public Builder() {
         super(new MapContext<J>());
       }
@@ -197,7 +199,7 @@ public abstract class Context<J> {
    * Contains a single value that may be replaced, but does not provide any traversal.
    */
   public static class ValueContext<T> extends PropertyContext<T, T> {
-    public static class Builder<T> extends Context.Builder<ValueContext<T>, T> {
+    public static class Builder<T> extends ContextImpl.Builder<ValueContext<T>, T> {
       public Builder() {
         this(new ValueContext<T>());
       }
@@ -233,7 +235,7 @@ public abstract class Context<J> {
    * Allows the traversal of a single property. This method will dispatch to the optional
    * {@link PropertyVisitor} interface methods.
    */
-  static abstract class PropertyContext<J, T> extends Context<J> implements Traversable<T> {
+  static abstract class PropertyContext<J, T> extends ContextImpl<J> implements Traversable<T> {
     protected T value;
 
     @Override
@@ -245,7 +247,7 @@ public abstract class Context<J> {
     public final T traverse(JsonDdlVisitor visitor) {
       if (visitor instanceof PropertyVisitor) {
         // Create a ValueContext to hold the replacement
-        org.jsonddl.Context.ValueContext<T> ctx =
+        org.jsonddl.impl.ContextImpl.ValueContext<T> ctx =
             new ValueContext.Builder<T>()
                 .withMutability(isMutable())
                 .withProperty(getProperty())
@@ -280,27 +282,32 @@ public abstract class Context<J> {
     T traverse(JsonDdlVisitor visitor);
   }
 
-  private boolean mutable;
-  private String property;
+  boolean mutable;
+  String property;
 
-  Context() {}
+  ContextImpl() {}
 
+  @Override
   public String getProperty() {
     return property;
   }
 
+  @Override
   public void insertAfter(J next) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void insertBefore(J previous) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void remove() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void replace(J replacement) {
     throw new UnsupportedOperationException();
   }

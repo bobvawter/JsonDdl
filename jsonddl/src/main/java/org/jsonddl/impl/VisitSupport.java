@@ -3,9 +3,9 @@ package org.jsonddl.impl;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import org.jsonddl.Context;
 import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
+import org.jsonddl.JsonDdlVisitor.Context;
 
 /**
  * Provides runtime support for dynamic visitor methods. This type should not be referenced except

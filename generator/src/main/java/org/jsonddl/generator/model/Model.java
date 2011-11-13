@@ -29,25 +29,25 @@ return this;}
 }
 private Model(){}
 public void accept(org.jsonddl.JsonDdlVisitor visitor) {
-new org.jsonddl.Context.ObjectContext.Builder<Model>().withValue(this).build().traverse(visitor);
+new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Model>().withValue(this).build().traverse(visitor);
 }
 public Model acceptMutable(org.jsonddl.JsonDdlVisitor visitor) {
-return new org.jsonddl.Context.ObjectContext.Builder<Model>().withValue(this).withMutability(true).build().traverse(visitor);
+return new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Model>().withValue(this).withMutability(true).build().traverse(visitor);
 }
 public Builder builder() { return newInstance().from(this); }
 public Builder newInstance() { return new Builder(); }
 public void traverse(org.jsonddl.JsonDdlVisitor visitor) {
-new org.jsonddl.Context.ValueContext.Builder<String>()
+new org.jsonddl.impl.ContextImpl.ValueContext.Builder<String>()
 .withMutability(false)
 .withProperty("comment")
 .withValue(this.comment)
 .build().traverse(visitor);
-new org.jsonddl.Context.ValueContext.Builder<String>()
+new org.jsonddl.impl.ContextImpl.ValueContext.Builder<String>()
 .withMutability(false)
 .withProperty("name")
 .withValue(this.name)
 .build().traverse(visitor);
-new org.jsonddl.Context.ListContext.Builder<Property>()
+new org.jsonddl.impl.ContextImpl.ListContext.Builder<Property>()
 .withMutability(false)
 .withProperty("properties")
 .withValue(this.properties)
@@ -57,19 +57,19 @@ new org.jsonddl.Context.ListContext.Builder<Property>()
 public Model traverseMutable(org.jsonddl.JsonDdlVisitor visitor) {
 Builder builder = newInstance();
 builder.withComment(
-new org.jsonddl.Context.ValueContext.Builder<String>()
+new org.jsonddl.impl.ContextImpl.ValueContext.Builder<String>()
 .withMutability(true)
 .withProperty("comment")
 .withValue(this.comment)
 .build().traverse(visitor));
 builder.withName(
-new org.jsonddl.Context.ValueContext.Builder<String>()
+new org.jsonddl.impl.ContextImpl.ValueContext.Builder<String>()
 .withMutability(true)
 .withProperty("name")
 .withValue(this.name)
 .build().traverse(visitor));
 builder.withProperties(
-new org.jsonddl.Context.ListContext.Builder<Property>()
+new org.jsonddl.impl.ContextImpl.ListContext.Builder<Property>()
 .withMutability(true)
 .withProperty("properties")
 .withValue(this.properties)
