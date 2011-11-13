@@ -27,22 +27,25 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 import javax.annotation.Generated;
 
 import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
-import org.jsonddl.generator.model.Kind;
-import org.jsonddl.generator.model.Model;
-import org.jsonddl.generator.model.Property;
-import org.jsonddl.generator.model.Schema;
-import org.jsonddl.generator.model.Type;
+import org.jsonddl.JsonStringVisitor;
 import org.jsonddl.impl.ContextImpl;
+import org.jsonddl.impl.Protected;
+import org.jsonddl.model.EnumValue;
+import org.jsonddl.model.Kind;
+import org.jsonddl.model.Model;
+import org.jsonddl.model.Property;
+import org.jsonddl.model.Schema;
+import org.jsonddl.model.Type;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Parser;
@@ -68,16 +71,17 @@ public class Generator {
   }
 
   class DdlTypeReplacer implements JsonDdlVisitor {
-    private Set<String> modelTypes;
+    private Map<String, Model> models;
 
     public void endVisit(Type t, Context<Type> ctx) {
-      if (Kind.EXTERNAL.equals(t.getKind()) && modelTypes.contains(t.getName())) {
-        ctx.replace(t.builder().withKind(Kind.DDL).build());
+      if (Kind.EXTERNAL.equals(t.getKind()) && models.containsKey(t.getName())) {
+        Kind kind = models.get(t.getName()).getEnumValues() == null ? Kind.DDL : Kind.ENUM;
+        ctx.replace(t.builder().withKind(kind).build());
       }
     }
 
     public boolean visit(Schema s, Context<Schema> ctx) {
-      modelTypes = s.getModels().keySet();
+      models = s.getModels();
       return true;
     }
   }
@@ -135,20 +139,44 @@ public class Generator {
 
     Map<String, Model> models = new TreeMap<String, Model>();
     for (ObjectProperty prop : obj.getElements()) {
-      List<Property> properties = new ArrayList<Property>();
-      ObjectLiteral propertyDeclarations = castOrNull(ObjectLiteral.class, prop.getRight());
-      for (ObjectProperty propertyDeclaration : propertyDeclarations.getElements()) {
-        properties.add(extractProperty(propertyDeclaration));
-      }
-      models.put(extractName(prop), new Model.Builder()
+      Model.Builder builder = new Model.Builder()
           .withComment(prop.getLeft().getJsDoc())
-          .withName(extractName(prop))
-          .withProperties(properties)
-          .build());
+          .withName(extractName(prop));
+
+      ArrayLiteral enumDeclarations = castOrNull(ArrayLiteral.class, prop.getRight());
+      ObjectLiteral propertyDeclarations = castOrNull(ObjectLiteral.class, prop.getRight());
+
+      if (enumDeclarations != null) {
+        List<EnumValue> enumValues = new ArrayList<EnumValue>();
+        for (AstNode node : enumDeclarations.getElements()) {
+          StringLiteral string = castOrNull(StringLiteral.class, node);
+          if (string == null) {
+            throw new UnexpectedNodeException(node, "Expecting a string");
+          }
+          enumValues.add(new EnumValue.Builder()
+              .withComment(node.getJsDoc())
+              .withName(string.getValue())
+              .build());
+        }
+        builder.withEnumValues(enumValues);
+      } else if (propertyDeclarations != null) {
+        List<Property> properties = new ArrayList<Property>();
+        for (ObjectProperty propertyDeclaration : propertyDeclarations.getElements()) {
+          properties.add(extractProperty(propertyDeclaration));
+        }
+        builder.withProperties(properties);
+      } else {
+        throw new UnexpectedNodeException(prop.getRight(),
+            "Expecting property declaration object or enum declaration array");
+      }
+      models.put(extractName(prop), builder.build());
     }
     Date now = new Date();
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     Schema s = new Schema.Builder().withModels(models).build().acceptMutable(new DdlTypeReplacer());
+    JsonStringVisitor v = new JsonStringVisitor();
+    s.accept(v);
+    System.out.println(v.toString());
     for (Model model : s.getModels().values()) {
       String simpleName = model.getName();
 
@@ -161,6 +189,20 @@ public class Generator {
       }
       out.println("@" + Generated.class.getCanonicalName() + "(value=\""
         + getClass().getCanonicalName() + "\", date=\"" + sdf.format(now) + "\")");
+
+      if (model.getEnumValues() != null) {
+        out.println("public enum " + simpleName + " {");
+        for (EnumValue enumValue : model.getEnumValues()) {
+          if (enumValue.getComment() != null) {
+            out.println(enumValue.getComment());
+          }
+          out.println(enumValue.getName() + ",");
+        }
+        out.println("}");
+        out.close();
+        continue;
+      }
+
       out.print("public class " + simpleName);
       // XXX implement interfaces
       // if (typeMap.containsKey("implements")) {
@@ -203,9 +245,15 @@ public class Generator {
         }
         out.println("public " + qsn + " get" + getterName + "() {return "
           + propName + ";}");
-        builder.println("public Builder with" + getterName + "(" + qsn
-          + " value) { obj."
-          + propName + " = value; return this;}");
+        builder.print(
+            "public Builder with" + getterName + "(" + qsn + " value) { ");
+        if (TypeAnswers.shouldProtect(type)) {
+          builder.print("obj." + propName + " = " + Protected.class.getCanonicalName()
+            + ".object(value);");
+        } else {
+          builder.print("obj." + propName + " = value;");
+        }
+        builder.println("return this;}");
 
         from.println("with" + getterName + "(from.get" + getterName + "());");
 
@@ -224,7 +272,8 @@ public class Generator {
       out.println("public void accept(" + JsonDdlVisitor.class.getCanonicalName() + " visitor) {");
       out.println("new " + ContextImpl.ObjectContext.Builder.class.getCanonicalName() + "<"
         + simpleName
-        + ">().withValue(this).build().traverse(visitor);");
+        + ">().withValue(this).withKind(" + Kind.class.getCanonicalName() + "." + Kind.DDL.name()
+        + ").build().traverse(visitor);");
       out.println("}");
 
       out.println("public " + simpleName + " acceptMutable("
@@ -232,7 +281,8 @@ public class Generator {
         + " visitor) {");
       out.println("return new " + ContextImpl.ObjectContext.Builder.class.getCanonicalName() + "<"
         + simpleName
-          + ">().withValue(this).withMutability(true).build().traverse(visitor);");
+          + ">().withValue(this).withKind(" + Kind.class.getCanonicalName() + "." + Kind.DDL.name()
+        + ").withMutability(true).build().traverse(visitor);");
       out.println("}");
 
       out.println("public Builder builder() { return newInstance().from(this); }");
@@ -291,6 +341,13 @@ public class Generator {
         .build();
   }
 
+  private String kindReference(Kind type) {
+    if (type == null) {
+      return "null";
+    }
+    return Kind.class.getCanonicalName() + "." + type.name();
+  }
+
   /**
    * Convert an AST node to a Java type reference.
    */
@@ -300,8 +357,7 @@ public class Generator {
       String value = string.getValue();
       if (value.isEmpty()) {
         return new Type.Builder()
-            .withKind(Kind.EXTERNAL)
-            .withName("String")
+            .withKind(Kind.STRING)
             .build();
       }
       return new Type.Builder().withKind(Kind.EXTERNAL).withName(value).build();
@@ -330,7 +386,6 @@ public class Generator {
     if (keyword != null && keyword.isBooleanLiteral()) {
       return new Type.Builder()
           .withKind(Kind.BOOLEAN)
-          // .withName(forceBoxed ? "Boolean" : "boolean")
           .build();
     }
 
@@ -340,12 +395,10 @@ public class Generator {
       if (Math.round(d) == d) {
         return new Type.Builder()
             .withKind(Kind.INTEGER)
-            // .withName(forceBoxed ? "Integer" : "int")
             .build();
       } else {
         return new Type.Builder()
             .withKind(Kind.DOUBLE)
-            // .withName(forceBoxed ? "Double" : "double")
             .build();
       }
     }
@@ -370,7 +423,29 @@ public class Generator {
     if (mutable) {
       pw.println("builder.with" + getterName + "(");
     }
+
+    final List<Kind> kindReferencs = new ArrayList<Kind>();
+    type.accept(new JsonDdlVisitor() {
+      public boolean visit(Type t, Context<Type> ctx) {
+        kindReferencs.add(t.getKind());
+        return true;
+      }
+    });
+
     pw.println("new " + TypeAnswers.getContextBuilderDeclaration(type) + "()");
+    pw.println(".withKind(" + kindReference(kindReferencs.remove(0)) + ")");
+    if (!kindReferencs.isEmpty()) {
+      pw.print(".withNestedKinds(" + Arrays.class.getCanonicalName() + ".asList(");
+      boolean needsComma = false;
+      for (Kind kind : kindReferencs) {
+        if (needsComma) {
+          pw.print(", ");
+        }
+        needsComma = true;
+        pw.print(kindReference(kind));
+      }
+      pw.println("))");
+    }
     pw.println(".withMutability(" + mutable + ")");
     pw.println(".withProperty(\"" + propertyName + "\")");
     pw.println(".withValue(this." + propertyName + ")");

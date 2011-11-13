@@ -1,0 +1,97 @@
+package org.jsonddl.impl;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.jsonddl.JsonDdlObject;
+
+public class Protected {
+  private static final Class<?> unmodifiableListClass;
+  private static final Class<?> unmodifiableMapClass;
+  static {
+    unmodifiableListClass = Collections.unmodifiableList(Arrays.asList(1, 2, 3)).getClass();
+    Map<Object, Object> testMap = new HashMap<Object, Object>();
+    testMap.put(new Object(), new Object());
+    testMap.put(new Object(), new Object());
+    unmodifiableMapClass = Collections.unmodifiableMap(testMap).getClass();
+  }
+
+  public static <T> List<T> object(List<T> values) {
+    if (values == null) {
+      return null;
+    }
+    switch (values.size()) {
+      case 0:
+        return Collections.emptyList();
+      case 1:
+        return Collections.singletonList(object(values.get(0)));
+      default:
+        if (unmodifiableListClass.equals(values.getClass())) {
+          return values;
+        }
+        ArrayList<T> toReturn = new ArrayList<T>(values.size());
+        for (T value : values) {
+          toReturn.add(object(value));
+        }
+        return Collections.unmodifiableList(toReturn);
+    }
+  }
+
+  public static <K, V> Map<K, V> object(Map<K, V> values) {
+    if (values == null) {
+      return null;
+    }
+    switch (values.size()) {
+      case 0:
+        return Collections.emptyMap();
+      case 1: {
+        Map.Entry<K, V> entry = values.entrySet().iterator().next();
+        return Collections.singletonMap(object(entry.getKey()), object(entry.getValue()));
+      }
+      default: {
+        if (unmodifiableMapClass.equals(values.getClass())) {
+          return values;
+        }
+        Map<K, V> toReturn = new HashMap<K, V>();
+        for (Map.Entry<K, V> entry : values.entrySet()) {
+          toReturn.put(object(entry.getKey()), object(entry.getValue()));
+        }
+        return Collections.unmodifiableMap(toReturn);
+      }
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> T object(T value) {
+    if (value == null) {
+      return null;
+    }
+    if (value instanceof Boolean) {
+      return value;
+    }
+    if (value instanceof Number) {
+      return value;
+    }
+    if (value instanceof String) {
+      return value;
+    }
+    if (value instanceof Enum<?>) {
+      return value;
+    }
+    if (value instanceof JsonDdlObject) {
+      return value;
+    }
+    if (value instanceof List) {
+      return (T) object((List<?>) value);
+    }
+    if (value instanceof Map) {
+      return (T) object((Map<?, ?>) value);
+    }
+
+    throw new IllegalArgumentException("Cannot protect type of " + value.getClass().getName());
+  }
+}

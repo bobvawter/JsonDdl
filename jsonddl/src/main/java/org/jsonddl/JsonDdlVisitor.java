@@ -13,11 +13,18 @@
  */
 package org.jsonddl;
 
+import java.util.List;
+
+import org.jsonddl.model.Kind;
+
 /**
  * Indicates that an object conforms to the following protocol.
  */
 public interface JsonDdlVisitor {
   public interface Context<J> {
+    Kind getKind();
+
+    List<Kind> getNestedKinds();
 
     String getProperty();
 

@@ -13,7 +13,10 @@
  */
 package org.jsonddl.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -22,6 +25,7 @@ import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.JsonDdlVisitor.Context;
 import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
+import org.jsonddl.model.Kind;
 
 public abstract class ContextImpl<J> implements Context<J> {
   public static class Builder<C extends ContextImpl<?> & Traversable<V>, V> {
@@ -37,8 +41,18 @@ public abstract class ContextImpl<J> implements Context<J> {
       return toReturn;
     }
 
+    public Builder<C, V> withKind(Kind kind) {
+      ctx.kind = kind;
+      return this;
+    }
+
     public Builder<C, V> withMutability(boolean isMutable) {
       ctx.mutable = isMutable;
+      return this;
+    }
+
+    public Builder<C, V> withNestedKinds(List<Kind> kinds) {
+      ctx.nestedKinds = Protected.object(kinds);
       return this;
     }
 
@@ -100,11 +114,19 @@ public abstract class ContextImpl<J> implements Context<J> {
     }
 
     @Override
+    public void setValue(List<J> value) {
+      if (value != null && isMutable()) {
+        value = new ArrayList<J>(value);
+      }
+      super.setValue(value);
+    }
+
+    @Override
     protected void doTraverse(JsonDdlVisitor visitor) {
       it = value.listIterator();
       while (it.hasNext()) {
         didReplace = false;
-        J temp = new ObjectContext.Builder<J>()
+        J temp = configureNestedBuilderKinds(new ObjectContext.Builder<J>())
             .withValue(it.next())
             .withProperty(getProperty())
             .withMutability(isMutable())
@@ -151,11 +173,19 @@ public abstract class ContextImpl<J> implements Context<J> {
     }
 
     @Override
+    public void setValue(Map<String, J> value) {
+      if (value != null && isMutable()) {
+        value = new LinkedHashMap<String, J>(value);
+      }
+      super.setValue(value);
+    }
+
+    @Override
     protected void doTraverse(JsonDdlVisitor visitor) {
       it = value.entrySet().iterator();
       while (it.hasNext()) {
         currentEntry = it.next();
-        J value = new ObjectContext.Builder<J>()
+        J value = configureNestedBuilderKinds(new ObjectContext.Builder<J>())
               .withValue(currentEntry.getValue())
               .withProperty(getProperty())
               .withMutability(isMutable())
@@ -180,7 +210,7 @@ public abstract class ContextImpl<J> implements Context<J> {
     ObjectContext() {}
 
     @Override
-    public void doTraverse(JsonDdlVisitor visitor) {
+    protected void doTraverse(JsonDdlVisitor visitor) {
       if (VisitSupport.visit(visitor, value, this)) {
         if (isMutable()) {
           J temp = value.traverseMutable(visitor);
@@ -239,16 +269,19 @@ public abstract class ContextImpl<J> implements Context<J> {
     protected T value;
 
     @Override
-    public final void setValue(T value) {
+    public void setValue(T value) {
       this.value = value;
     }
 
     @Override
     public final T traverse(JsonDdlVisitor visitor) {
-      if (visitor instanceof PropertyVisitor) {
+      // Avoid treating a root object as though it were embedded in a property
+      if (property != null && visitor instanceof PropertyVisitor) {
         // Create a ValueContext to hold the replacement
         org.jsonddl.impl.ContextImpl.ValueContext<T> ctx =
             new ValueContext.Builder<T>()
+                .withKind(getKind())
+                .withNestedKinds(getNestedKinds())
                 .withMutability(isMutable())
                 .withProperty(getProperty())
                 .withValue(value)
@@ -282,10 +315,22 @@ public abstract class ContextImpl<J> implements Context<J> {
     T traverse(JsonDdlVisitor visitor);
   }
 
+  Kind kind;
+  List<Kind> nestedKinds = Collections.emptyList();
   boolean mutable;
   String property;
 
   ContextImpl() {}
+
+  @Override
+  public Kind getKind() {
+    return kind;
+  }
+
+  @Override
+  public List<Kind> getNestedKinds() {
+    return nestedKinds;
+  }
 
   @Override
   public String getProperty() {
@@ -314,5 +359,27 @@ public abstract class ContextImpl<J> implements Context<J> {
 
   protected boolean isMutable() {
     return mutable;
+  }
+
+  <B extends Builder<?, ?>> B configureNestedBuilderKinds(B builder) {
+    List<Kind> kinds = new ArrayList<Kind>(getNestedKinds());
+    List<Kind> newNested = new ArrayList<Kind>();
+    extractKinds(kinds, newNested);
+    builder.withKind(newNested.remove(0)).withNestedKinds(newNested);
+    return builder;
+  }
+
+  private void extractKinds(List<Kind> input, List<Kind> output) {
+    Kind kind = input.remove(0);
+    output.add(kind);
+    switch (kind) {
+      case LIST:
+        extractKinds(input, output);
+        return;
+      case MAP:
+        extractKinds(input, output);
+        extractKinds(input, output);
+        return;
+    }
   }
 }

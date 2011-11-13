@@ -1,8 +1,8 @@
-package org.jsonddl.generator.model;
+package org.jsonddl.model;
 /**
      * A property is a pair of a name and a type.
      */
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-12T13:46:35")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-13T15:24:51")
 public class Property implements org.jsonddl.JsonDdlObject<Property> {
 private String comment;
 /**
@@ -20,9 +20,9 @@ Property toReturn = obj;
 obj = null;
 return toReturn;
 }
-public Builder withComment(String value) { obj.comment = value; return this;}
-public Builder withName(String value) { obj.name = value; return this;}
-public Builder withType(Type value) { obj.type = value; return this;}
+public Builder withComment(String value) { obj.comment = value;return this;}
+public Builder withName(String value) { obj.name = value;return this;}
+public Builder withType(Type value) { obj.type = value;return this;}
 public Builder from(Property from) {
 withComment(from.getComment());
 withName(from.getName());
@@ -31,25 +31,28 @@ return this;}
 }
 private Property(){}
 public void accept(org.jsonddl.JsonDdlVisitor visitor) {
-new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Property>().withValue(this).build().traverse(visitor);
+new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Property>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).build().traverse(visitor);
 }
 public Property acceptMutable(org.jsonddl.JsonDdlVisitor visitor) {
-return new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Property>().withValue(this).withMutability(true).build().traverse(visitor);
+return new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Property>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).withMutability(true).build().traverse(visitor);
 }
 public Builder builder() { return newInstance().from(this); }
 public Builder newInstance() { return new Builder(); }
 public void traverse(org.jsonddl.JsonDdlVisitor visitor) {
 new org.jsonddl.impl.ContextImpl.ValueContext.Builder<String>()
+.withKind(org.jsonddl.model.Kind.STRING)
 .withMutability(false)
 .withProperty("comment")
 .withValue(this.comment)
 .build().traverse(visitor);
 new org.jsonddl.impl.ContextImpl.ValueContext.Builder<String>()
+.withKind(org.jsonddl.model.Kind.STRING)
 .withMutability(false)
 .withProperty("name")
 .withValue(this.name)
 .build().traverse(visitor);
 new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Type>()
+.withKind(org.jsonddl.model.Kind.DDL)
 .withMutability(false)
 .withProperty("type")
 .withValue(this.type)
@@ -60,18 +63,21 @@ public Property traverseMutable(org.jsonddl.JsonDdlVisitor visitor) {
 Builder builder = newInstance();
 builder.withComment(
 new org.jsonddl.impl.ContextImpl.ValueContext.Builder<String>()
+.withKind(org.jsonddl.model.Kind.STRING)
 .withMutability(true)
 .withProperty("comment")
 .withValue(this.comment)
 .build().traverse(visitor));
 builder.withName(
 new org.jsonddl.impl.ContextImpl.ValueContext.Builder<String>()
+.withKind(org.jsonddl.model.Kind.STRING)
 .withMutability(true)
 .withProperty("name")
 .withValue(this.name)
 .build().traverse(visitor));
 builder.withType(
 new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Type>()
+.withKind(org.jsonddl.model.Kind.DDL)
 .withMutability(true)
 .withProperty("type")
 .withValue(this.type)

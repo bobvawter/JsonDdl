@@ -34,6 +34,9 @@ public class VisitSupport {
         throw new RuntimeException(e);
       } catch (NoSuchMethodException e) {
         searchFor = searchFor.getSuperclass();
+        if (Object.class.equals(searchFor)) {
+          searchFor = JsonDdlObject.class;
+        }
       }
     }
     return null;

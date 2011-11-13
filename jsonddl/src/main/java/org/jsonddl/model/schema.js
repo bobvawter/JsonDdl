@@ -36,6 +36,7 @@ var schema = {
      */
     Model : {
 	comment : "",
+	enumValues : [ "EnumValue" ],
 	name : "",
 	properties : [ "Property" ]
     },
@@ -50,10 +51,25 @@ var schema = {
 	name : "",
 	type : "Type"
     },
+    EnumValue : {
+	comment : "",
+	name : ""
+    },
     /**
      * This is a simplified type system, representing only the types of data
      * that can be directly expressed in JSON.
      */
+    Kind : [ "BOOLEAN", "DDL", "DOUBLE", "ENUM",
+    /**
+     * Indicates that a type named by a property declaration could not be
+     * resolved to a model type declared within the schema. In this case, the
+     * interpretation of the type name will be left to the code generator.
+     */
+    "EXTERNAL", "INTEGER", "LIST",
+    /**
+     * The only map key type that makes sense for json is a String.
+     */
+    "MAP", "STRING" ],
     Type : {
 	name : "",
 	kind : "Kind",
