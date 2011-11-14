@@ -173,7 +173,7 @@ public class Generator {
       }
       models.put(extractName(prop), builder.build());
     }
-    Schema s = new Schema.Builder().withModels(models).build().acceptMutable(new DdlTypeReplacer());
+    Schema s = new Schema.Builder().withModels(models).acceptMutable(new DdlTypeReplacer()).build();
     String json = s.toJson();
     System.out.println(json);
     try {
@@ -309,6 +309,14 @@ public class Generator {
         writeTraversalForProperty(traverse, propName, getterName, type, false);
         writeTraversalForProperty(traverseMutable, propName, getterName, type, true);
       }
+      builder.println("public Builder acceptMutable(" + JsonDdlVisitor.class.getCanonicalName()
+        + " visitor) {");
+      builder.println("obj = new " + ContextImpl.ObjectContext.Builder.class.getCanonicalName()
+        + "<" + simpleName + ">().withValue(obj).withKind(" + Kind.class.getCanonicalName() + "."
+        + Kind.DDL.name() + ").withMutability(true).build().traverse(visitor);");
+      builder.println("return this;");
+      builder.println("}");
+
       builder.println("public Builder from(" + simpleName + " from) {");
       builder.append(fromContents.getBuffer());
       builder.append("return this;");
@@ -316,12 +324,19 @@ public class Generator {
 
       builder.println("public Builder from(" + Map.class.getCanonicalName()
         + "<String, Object> map){");
-      builder.println("obj = obj.acceptMutable(" + JsonStringVisitor.class.getCanonicalName()
+      builder.println("acceptMutable(" + JsonStringVisitor.class.getCanonicalName()
         + ".fromJsonMap(map));");
       builder.println("return this;");
       builder.println("}");
 
+      builder.println("public Builder traverseMutable("
+          + JsonDdlVisitor.class.getCanonicalName()
+          + " visitor) {");
+      builder.println(traverseMutableContents.getBuffer());
+      builder.println("return this;");
       builder.println("}");
+      builder.println("}");
+      // END BUILDER
       out.append(builderContents.getBuffer().toString());
 
       out.println("private " + simpleName + "(){}");
@@ -333,15 +348,6 @@ public class Generator {
         + ").build().traverse(visitor);");
       out.println("}");
 
-      out.println("public " + simpleName + " acceptMutable("
-        + JsonDdlVisitor.class.getCanonicalName()
-        + " visitor) {");
-      out.println("return new " + ContextImpl.ObjectContext.Builder.class.getCanonicalName() + "<"
-        + simpleName
-          + ">().withValue(this).withKind(" + Kind.class.getCanonicalName() + "." + Kind.DDL.name()
-        + ").withMutability(true).build().traverse(visitor);");
-      out.println("}");
-
       out.println("public Builder builder() { return newInstance().from(this); }");
       out.println("public Builder newInstance() { return new Builder(); }");
 
@@ -351,14 +357,6 @@ public class Generator {
       out.println("public void traverse(" + JsonDdlVisitor.class.getCanonicalName()
         + " visitor) {");
       out.println(traverseContents.getBuffer());
-      out.println("}");
-
-      out.println("public " + simpleName + " traverseMutable("
-        + JsonDdlVisitor.class.getCanonicalName()
-        + " visitor) {");
-      out.println("Builder builder = newInstance();");
-      out.println(traverseMutableContents.getBuffer());
-      out.println("return builder.build();");
       out.println("}");
 
       out.println("}");
@@ -447,7 +445,7 @@ public class Generator {
   private void writeTraversalForProperty(PrintWriter pw, String propertyName, String getterName,
       Type type, boolean mutable) {
     if (mutable) {
-      pw.println("builder.with" + getterName + "(");
+      pw.println("with" + getterName + "(");
     }
 
     final List<Kind> kindReferencs = new ArrayList<Kind>();
@@ -476,7 +474,8 @@ public class Generator {
     pw.println(".withLeafType(" + TypeAnswers.getQualifiedLeafTypeName(type) + ".class)");
     pw.println(".withMutability(" + mutable + ")");
     pw.println(".withProperty(\"" + propertyName + "\")");
-    pw.println(".withValue(this." + propertyName + ")");
+    String propertyRef = (mutable ? "obj" : "this") + "." + propertyName;
+    pw.println(".withValue(" + propertyRef + ")");
     pw.print(".build().traverse(visitor)");
     if (mutable) {
       pw.print(")");

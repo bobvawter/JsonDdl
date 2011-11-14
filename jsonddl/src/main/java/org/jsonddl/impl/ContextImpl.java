@@ -214,7 +214,7 @@ public abstract class ContextImpl<J> implements Context<J> {
     protected void doTraverse(JsonDdlVisitor visitor) {
       if (VisitSupport.visit(visitor, value, this)) {
         if (isMutable()) {
-          J temp = value.traverseMutable(visitor);
+          J temp = value.builder().traverseMutable(visitor).build();
           if (!didChange) {
             value = temp;
           }

@@ -17,16 +17,18 @@ import java.util.Map;
 
 public interface JsonDdlObject<J extends JsonDdlObject<J>> {
   public interface Builder<J extends JsonDdlObject<J>> {
+    Builder<J> acceptMutable(JsonDdlVisitor visitor);
+
     J build();
 
     Builder<J> from(J copyFrom);
 
     Builder<J> from(Map<String, Object> map);
+
+    Builder<J> traverseMutable(JsonDdlVisitor visitor);
   }
 
   void accept(JsonDdlVisitor visitor);
-
-  J acceptMutable(JsonDdlVisitor visitor);
 
   //
   // <O extends JsonDdlObject<O>> O as(Class<O> clazz);
@@ -39,5 +41,4 @@ public interface JsonDdlObject<J extends JsonDdlObject<J>> {
 
   void traverse(JsonDdlVisitor visitor);
 
-  J traverseMutable(JsonDdlVisitor visitor);
 }
