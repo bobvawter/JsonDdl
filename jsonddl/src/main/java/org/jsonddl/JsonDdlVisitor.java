@@ -24,6 +24,8 @@ public interface JsonDdlVisitor {
   public interface Context<J> {
     Kind getKind();
 
+    Class<?> getLeafType();
+
     List<Kind> getNestedKinds();
 
     String getProperty();

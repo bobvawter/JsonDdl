@@ -35,6 +35,8 @@ import java.util.TreeMap;
 
 import javax.annotation.Generated;
 
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.JsonStringVisitor;
@@ -172,7 +174,15 @@ public class Generator {
       models.put(extractName(prop), builder.build());
     }
     Schema s = new Schema.Builder().withModels(models).build().acceptMutable(new DdlTypeReplacer());
-    System.out.println(s.toJson());
+    String json = s.toJson();
+    System.out.println(json);
+    try {
+      Object o = new JSONParser().parse(json);
+      Schema s2 = new Schema.Builder().from((Map<String, Object>) o).build();
+      System.out.println(s2.toJson());
+    } catch (ParseException e) {
+      e.printStackTrace();
+    }
     generateIndustrialObjects(packageName, output, s);
     return true;
   }
@@ -303,6 +313,14 @@ public class Generator {
       builder.append(fromContents.getBuffer());
       builder.append("return this;");
       builder.println("}");
+
+      builder.println("public Builder from(" + Map.class.getCanonicalName()
+        + "<String, Object> map){");
+      builder.println("obj = obj.acceptMutable(" + JsonStringVisitor.class.getCanonicalName()
+        + ".fromJsonMap(map));");
+      builder.println("return this;");
+      builder.println("}");
+
       builder.println("}");
       out.append(builderContents.getBuffer().toString());
 
@@ -455,6 +473,7 @@ public class Generator {
       }
       pw.println("))");
     }
+    pw.println(".withLeafType(" + TypeAnswers.getQualifiedLeafTypeName(type) + ".class)");
     pw.println(".withMutability(" + mutable + ")");
     pw.println(".withProperty(\"" + propertyName + "\")");
     pw.println(".withValue(this." + propertyName + ")");

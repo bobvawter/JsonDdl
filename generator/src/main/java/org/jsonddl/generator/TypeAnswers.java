@@ -76,6 +76,16 @@ class TypeAnswers {
     return getQualifiedSourceName(type);
   }
 
+  public static String getQualifiedLeafTypeName(Type type) {
+    switch (type.getKind()) {
+      case LIST:
+        return getQualifiedLeafTypeName(type.getListElement());
+      case MAP:
+        return getQualifiedLeafTypeName(type.getMapValue());
+    }
+    return getQualifiedSourceName(type);
+  }
+
   public static String getQualifiedSourceName(Type type) {
     switch (type.getKind()) {
       case BOOLEAN:

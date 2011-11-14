@@ -13,18 +13,19 @@
  */
 package org.jsonddl;
 
+import java.util.Map;
+
 public interface JsonDdlObject<J extends JsonDdlObject<J>> {
   public interface Builder<J extends JsonDdlObject<J>> {
     J build();
 
     Builder<J> from(J copyFrom);
-    //
-    // Builder<J> from(String json);
+
+    Builder<J> from(Map<String, Object> map);
   }
 
   void accept(JsonDdlVisitor visitor);
 
-  //
   J acceptMutable(JsonDdlVisitor visitor);
 
   //

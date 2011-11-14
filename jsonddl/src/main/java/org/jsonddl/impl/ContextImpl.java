@@ -46,6 +46,11 @@ public abstract class ContextImpl<J> implements Context<J> {
       return this;
     }
 
+    public Builder<C, V> withLeafType(Class<?> leafType) {
+      ctx.leafType = leafType;
+      return this;
+    }
+
     public Builder<C, V> withMutability(boolean isMutable) {
       ctx.mutable = isMutable;
       return this;
@@ -128,8 +133,6 @@ public abstract class ContextImpl<J> implements Context<J> {
         didReplace = false;
         J temp = configureNestedBuilderKinds(new ObjectContext.Builder<J>())
             .withValue(it.next())
-            .withProperty(getProperty())
-            .withMutability(isMutable())
             .build().traverse(visitor);
         if (isMutable() && !didReplace) {
           it.set(temp);
@@ -187,8 +190,6 @@ public abstract class ContextImpl<J> implements Context<J> {
         currentEntry = it.next();
         J value = configureNestedBuilderKinds(new ObjectContext.Builder<J>())
               .withValue(currentEntry.getValue())
-              .withProperty(getProperty())
-              .withMutability(isMutable())
               .build().traverse(visitor);
         if (isMutable() && !didReplace) {
           currentEntry.setValue(value);
@@ -279,11 +280,7 @@ public abstract class ContextImpl<J> implements Context<J> {
       if (property != null && visitor instanceof PropertyVisitor) {
         // Create a ValueContext to hold the replacement
         org.jsonddl.impl.ContextImpl.ValueContext<T> ctx =
-            new ValueContext.Builder<T>()
-                .withKind(getKind())
-                .withNestedKinds(getNestedKinds())
-                .withMutability(isMutable())
-                .withProperty(getProperty())
+            configureNestedBuilderKinds(new ValueContext.Builder<T>())
                 .withValue(value)
                 .build();
 
@@ -316,6 +313,7 @@ public abstract class ContextImpl<J> implements Context<J> {
   }
 
   Kind kind;
+  Class<?> leafType;
   List<Kind> nestedKinds = Collections.emptyList();
   boolean mutable;
   String property;
@@ -325,6 +323,11 @@ public abstract class ContextImpl<J> implements Context<J> {
   @Override
   public Kind getKind() {
     return kind;
+  }
+
+  @Override
+  public Class<?> getLeafType() {
+    return leafType;
   }
 
   @Override
@@ -362,8 +365,12 @@ public abstract class ContextImpl<J> implements Context<J> {
   }
 
   <B extends Builder<?, ?>> B configureNestedBuilderKinds(B builder) {
-    List<Kind> kinds = new ArrayList<Kind>(getNestedKinds());
-    builder.withKind(kinds.remove(0)).withNestedKinds(kinds);
+    builder
+        .withKind(getKind())
+        .withNestedKinds(getNestedKinds())
+        .withLeafType(getLeafType())
+        .withMutability(isMutable())
+        .withProperty(getProperty());
     return builder;
   }
 }
