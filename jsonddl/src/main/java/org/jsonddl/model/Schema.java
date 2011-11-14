@@ -3,7 +3,7 @@ package org.jsonddl.model;
      * A Schema is the top-level object that encapsulates the normalized form of
      * a json-ddl schema.
      */
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-13T15:24:51")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-13T15:59:39")
 public class Schema implements org.jsonddl.JsonDdlObject<Schema> {
 private java.util.Map<String,Model> models;
 /**
@@ -31,6 +31,7 @@ return new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Schema>().withValu
 }
 public Builder builder() { return newInstance().from(this); }
 public Builder newInstance() { return new Builder(); }
+public String toJson() { return org.jsonddl.JsonStringVisitor.toJsonString(this); }
 public void traverse(org.jsonddl.JsonDdlVisitor visitor) {
 new org.jsonddl.impl.ContextImpl.MapContext.Builder<Model>()
 .withKind(org.jsonddl.model.Kind.MAP)

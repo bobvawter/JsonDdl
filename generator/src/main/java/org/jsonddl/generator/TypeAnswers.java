@@ -1,6 +1,7 @@
 package org.jsonddl.generator;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 import org.jsonddl.impl.ContextImpl;
@@ -27,8 +28,8 @@ class TypeAnswers {
     Class<?> contextBuilderType = getContextBuilderType(type);
     sb.append(contextBuilderType.getCanonicalName());
     sb.append("<");
-    if (getContextBuilderType(Kind.EXTERNAL).equals(contextBuilderType)) {
-      sb.append(getQualifiedSourceName(type));
+    if (contextTypes.get(Kind.EXTERNAL).equals(contextBuilderType)) {
+      sb.append(getParameterizedQualifiedSourceName(type));
     } else {
       sb.append(getContextParameterization(type));
     }
@@ -36,24 +37,20 @@ class TypeAnswers {
     return sb.toString();
   }
 
-  public static Class<?> getContextBuilderType(Kind kind) {
-    return contextTypes.get(kind);
-  }
-
   public static Class<?> getContextBuilderType(Type type) {
     switch (type.getKind()) {
       case LIST:
         if (Kind.DDL.equals(type.getListElement().getKind())) {
-          return getContextBuilderType(Kind.LIST);
+          return contextTypes.get(Kind.LIST);
         }
-        return getContextBuilderType(Kind.EXTERNAL);
+        return contextTypes.get(Kind.EXTERNAL);
       case MAP:
         if (Kind.DDL.equals(type.getMapValue().getKind())) {
-          return getContextBuilderType(Kind.MAP);
+          return contextTypes.get(Kind.MAP);
         }
-        return getContextBuilderType(Kind.EXTERNAL);
+        return contextTypes.get(Kind.EXTERNAL);
     }
-    return getContextBuilderType(type.getKind());
+    return contextTypes.get(type.getKind());
   }
 
   public static String getContextParameterization(Type type) {
@@ -63,28 +60,40 @@ class TypeAnswers {
       case MAP:
         return type.getMapValue().getName();
     }
+    return getParameterizedQualifiedSourceName(type);
+  }
+
+  public static String getParameterizedQualifiedSourceName(Type type) {
+    switch (type.getKind()) {
+      case LIST:
+        return String.format("%s<%s>", getQualifiedSourceName(type),
+            getParameterizedQualifiedSourceName(type.getListElement()));
+      case MAP:
+        return String.format("%s<%s,%s>", getQualifiedSourceName(type),
+            getParameterizedQualifiedSourceName(type.getMapKey()),
+            getParameterizedQualifiedSourceName(type.getMapValue()));
+    }
     return getQualifiedSourceName(type);
   }
 
   public static String getQualifiedSourceName(Type type) {
     switch (type.getKind()) {
       case BOOLEAN:
-        return "Boolean";
+        return Boolean.class.getCanonicalName();
       case DOUBLE:
-        return "Double";
+        return Double.class.getCanonicalName();
       case INTEGER:
-        return "Integer";
+        return Integer.class.getCanonicalName();
       case STRING:
-        return "String";
+        return String.class.getCanonicalName();
       case DDL:
       case ENUM:
       case EXTERNAL:
         return type.getName();
       case LIST:
-        return String.format("java.util.List<%s>", getQualifiedSourceName(type.getListElement()));
+        return List.class.getCanonicalName();
       case MAP:
-        return String.format("java.util.Map<%s,%s>", getQualifiedSourceName(type.getMapKey()),
-            getQualifiedSourceName(type.getMapValue()));
+        return Map.class.getCanonicalName();
     }
     throw new UnsupportedOperationException(type.toString());
   }

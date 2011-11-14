@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.json.JSONObject;
+import org.json.simple.JSONValue;
 import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
 import org.jsonddl.model.Kind;
 
 public class JsonStringVisitor implements PropertyVisitor {
+
   static class JsonDdlStringer implements Stringer {
     public static final Stringer INSTANCE = new JsonDdlStringer();
 
@@ -91,12 +92,17 @@ public class JsonStringVisitor implements PropertyVisitor {
 
     @Override
     public String toJsonString(Object value) {
-      return JSONObject.quote(value.toString());
+      return '"' + JSONValue.escape(value.toString()) + '"';
     }
   }
 
+  public static String toJsonString(JsonDdlObject<?> obj) {
+    JsonStringVisitor v = new JsonStringVisitor();
+    obj.accept(v);
+    return v.toString();
+  }
+
   private boolean needsComma;
-  private boolean prettyPrint;
   private boolean printNulls;
   private StringBuilder sb = new StringBuilder();
 
@@ -126,7 +132,7 @@ public class JsonStringVisitor implements PropertyVisitor {
       sb.append(",");
     }
     needsComma = true;
-    sb.append(JSONObject.quote(ctx.getProperty())).append(":");
+    sb.append('"').append(JSONValue.escape(ctx.getProperty())).append("\":");
     if (value == null) {
       sb.append("null");
     } else {

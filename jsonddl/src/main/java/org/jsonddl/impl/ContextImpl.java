@@ -363,23 +363,7 @@ public abstract class ContextImpl<J> implements Context<J> {
 
   <B extends Builder<?, ?>> B configureNestedBuilderKinds(B builder) {
     List<Kind> kinds = new ArrayList<Kind>(getNestedKinds());
-    List<Kind> newNested = new ArrayList<Kind>();
-    extractKinds(kinds, newNested);
-    builder.withKind(newNested.remove(0)).withNestedKinds(newNested);
+    builder.withKind(kinds.remove(0)).withNestedKinds(kinds);
     return builder;
-  }
-
-  private void extractKinds(List<Kind> input, List<Kind> output) {
-    Kind kind = input.remove(0);
-    output.add(kind);
-    switch (kind) {
-      case LIST:
-        extractKinds(input, output);
-        return;
-      case MAP:
-        extractKinds(input, output);
-        extractKinds(input, output);
-        return;
-    }
   }
 }

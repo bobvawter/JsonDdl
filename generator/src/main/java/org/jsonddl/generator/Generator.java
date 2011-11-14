@@ -13,7 +13,7 @@
  */
 package org.jsonddl.generator;
 
-import static org.jsonddl.generator.TypeAnswers.getQualifiedSourceName;
+import static org.jsonddl.generator.TypeAnswers.getParameterizedQualifiedSourceName;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -171,12 +171,49 @@ public class Generator {
       }
       models.put(extractName(prop), builder.build());
     }
+    Schema s = new Schema.Builder().withModels(models).build().acceptMutable(new DdlTypeReplacer());
+    System.out.println(s.toJson());
+    generateIndustrialObjects(packageName, output, s);
+    return true;
+  }
+
+  private <T extends AstNode> T castOrNull(Class<T> clazz, AstNode node) {
+    if (clazz.isInstance(node)) {
+      return clazz.cast(node);
+    }
+    return null;
+  }
+
+  /**
+   * Extracts the name of the given object property.
+   */
+  private String extractName(ObjectProperty prop) {
+    String typeName;
+    StringLiteral typeNameAsLit = castOrNull(StringLiteral.class, prop.getLeft());
+    Name typeNameAsName = castOrNull(Name.class, prop.getLeft());
+    if (typeNameAsLit != null) {
+      typeName = typeNameAsLit.getValue();
+    } else if (typeNameAsName != null) {
+      typeName = typeNameAsName.getIdentifier();
+    } else {
+      throw new RuntimeException("Unexpected node type "
+        + prop.getLeft().getClass().getSimpleName());
+    }
+    return typeName;
+  }
+
+  private Property extractProperty(ObjectProperty prop) {
+    return new Property.Builder()
+        .withComment(prop.getLeft().getJsDoc())
+        .withName(extractName(prop))
+        .withType(typeName(prop.getRight(), false))
+        .build();
+  }
+
+  private void generateIndustrialObjects(String packageName, Collector output, Schema s)
+      throws IOException {
     Date now = new Date();
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-    Schema s = new Schema.Builder().withModels(models).build().acceptMutable(new DdlTypeReplacer());
-    JsonStringVisitor v = new JsonStringVisitor();
-    s.accept(v);
-    System.out.println(v.toString());
     for (Model model : s.getModels().values()) {
       String simpleName = model.getName();
 
@@ -219,7 +256,9 @@ public class Generator {
       {
         builder.println("public static class Builder implements "
           + JsonDdlObject.Builder.class.getCanonicalName() + "<" + simpleName + "> {");
-        builder.println("private " + simpleName + " obj = new " + simpleName + "();");
+        builder.println("private " + simpleName + " obj;");
+        builder.println("public Builder() {this(new " + simpleName + "());}");
+        builder.println("public Builder(" + simpleName + " instance) {this.obj = instance;}");
         builder.println("public " + simpleName + " build() {");
         builder.println(simpleName + " toReturn = obj;");
         builder.println("obj = null;");
@@ -238,7 +277,7 @@ public class Generator {
         String getterName = Character.toUpperCase(propName.charAt(0))
           + (propName.length() > 1 ? propName.substring(1) : "");
 
-        String qsn = getQualifiedSourceName(type);
+        String qsn = getParameterizedQualifiedSourceName(type);
         out.println("private " + qsn + " " + propName + ";");
         if (property.getComment() != null) {
           out.println(property.getComment());
@@ -288,6 +327,9 @@ public class Generator {
       out.println("public Builder builder() { return newInstance().from(this); }");
       out.println("public Builder newInstance() { return new Builder(); }");
 
+      out.println("public String toJson() { return " + JsonStringVisitor.class.getCanonicalName()
+        + ".toJsonString(this); }");
+
       out.println("public void traverse(" + JsonDdlVisitor.class.getCanonicalName()
         + " visitor) {");
       out.println(traverseContents.getBuffer());
@@ -305,40 +347,6 @@ public class Generator {
 
       out.close();
     }
-    return true;
-  }
-
-  private <T extends AstNode> T castOrNull(Class<T> clazz, AstNode node) {
-    if (clazz.isInstance(node)) {
-      return clazz.cast(node);
-    }
-    return null;
-  }
-
-  /**
-   * Extracts the name of the given object property.
-   */
-  private String extractName(ObjectProperty prop) {
-    String typeName;
-    StringLiteral typeNameAsLit = castOrNull(StringLiteral.class, prop.getLeft());
-    Name typeNameAsName = castOrNull(Name.class, prop.getLeft());
-    if (typeNameAsLit != null) {
-      typeName = typeNameAsLit.getValue();
-    } else if (typeNameAsName != null) {
-      typeName = typeNameAsName.getIdentifier();
-    } else {
-      throw new RuntimeException("Unexpected node type "
-        + prop.getLeft().getClass().getSimpleName());
-    }
-    return typeName;
-  }
-
-  private Property extractProperty(ObjectProperty prop) {
-    return new Property.Builder()
-        .withComment(prop.getLeft().getJsDoc())
-        .withName(extractName(prop))
-        .withType(typeName(prop.getRight(), false))
-        .build();
   }
 
   private String kindReference(Kind type) {
@@ -426,6 +434,7 @@ public class Generator {
 
     final List<Kind> kindReferencs = new ArrayList<Kind>();
     type.accept(new JsonDdlVisitor() {
+      @SuppressWarnings("unused")
       public boolean visit(Type t, Context<Type> ctx) {
         kindReferencs.add(t.getKind());
         return true;
