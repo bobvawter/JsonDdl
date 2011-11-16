@@ -23,7 +23,7 @@
       <plugin>
         <groupId>org.jsonddl</groupId>
         <artifactId>jsonddl-maven-plugin</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${project.version}</version>
         <executions>
           <execution>
             <configuration>
