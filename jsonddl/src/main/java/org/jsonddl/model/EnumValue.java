@@ -1,127 +1,90 @@
 package org.jsonddl.model;
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-15T23:47:54")
+public interface EnumValue extends org.jsonddl.JsonDdlObject {
+java.lang.String getComment();
+java.lang.String getName();
+public static class Builder implements org.jsonddl.JsonDdlObject.Builder<EnumValue>, EnumValue {
+private EnumValue.Impl obj;
+public Builder() {this(new EnumValue.Impl());}
+public Builder(EnumValue.Impl instance) {this.obj = instance;}
+public EnumValue build() {
+EnumValue toReturn = obj;
+obj = null;
+return toReturn;
+}
+public Builder builder() { return this; }
+public Class<EnumValue> getDdlObjectType() { return EnumValue.class;}
+public Builder newInstance() { return new Builder(); }
+public java.util.Map<String, Object> toJsonObject() { return obj.toJsonObject(); }
+public java.lang.String getComment() { return obj.comment; }
+public Builder withComment(java.lang.String value) { obj.comment = value;return this;}
+public java.lang.String getName() { return obj.name; }
+public Builder withName(java.lang.String value) { obj.name = value;return this;}
+public Builder accept(org.jsonddl.JsonDdlVisitor visitor) {
+obj = new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<EnumValue>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).withMutability(true).build().traverse(visitor).builder().obj;
+return this;
+}
+public Builder from(EnumValue from) {
+withComment(from.getComment());
+withName(from.getName());
+return this;}
+public Builder from(java.util.Map<String, Object> map){
+accept(org.jsonddl.JsonMapVisitor.fromJsonMap(map));
+return this;
+}
+public Builder traverse(org.jsonddl.JsonDdlVisitor visitor) {
+withComment(
+new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
+.withKind(org.jsonddl.model.Kind.STRING)
+.withLeafType(java.lang.String.class)
+.withMutability(true)
+.withProperty("comment")
+.withValue(obj.comment)
+.build().traverse(visitor));
+withName(
+new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
+.withKind(org.jsonddl.model.Kind.STRING)
+.withLeafType(java.lang.String.class)
+.withMutability(true)
+.withProperty("name")
+.withValue(obj.name)
+.build().traverse(visitor));
 
-@javax.annotation.Generated(value = "org.jsonddl.generator.Generator", date = "2011-11-15T21:53:00")
-public class EnumValue implements org.jsonddl.JsonDdlObject<EnumValue> {
-  public static class Builder implements org.jsonddl.JsonDdlObject.Builder<EnumValue> {
-    private EnumValue obj;
+return this;
+}
+}
+public static class Impl implements EnumValue {
+protected Impl() {}
+public Class<EnumValue> getDdlObjectType() { return EnumValue.class;}
+private java.lang.String comment;
+public java.lang.String getComment() {return comment;}
+private java.lang.String name;
+public java.lang.String getName() {return name;}
+public EnumValue accept(org.jsonddl.JsonDdlVisitor visitor) {
+return new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<EnumValue>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).build().traverse(visitor);
+}
+public Builder builder() { return newInstance().from(this); }
+public Builder newInstance() { return new Builder(); }
+public java.util.Map<String,Object> toJsonObject() { return org.jsonddl.JsonMapVisitor.toJsonObject(this); }
+public EnumValue traverse(org.jsonddl.JsonDdlVisitor visitor) {
+new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
+.withKind(org.jsonddl.model.Kind.STRING)
+.withLeafType(java.lang.String.class)
+.withMutability(false)
+.withProperty("comment")
+.withValue(this.comment)
+.build().traverse(visitor);
+new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
+.withKind(org.jsonddl.model.Kind.STRING)
+.withLeafType(java.lang.String.class)
+.withMutability(false)
+.withProperty("name")
+.withValue(this.name)
+.build().traverse(visitor);
 
-    public Builder() {
-      this(new EnumValue());
-    }
-
-    public Builder(EnumValue instance) {
-      this.obj = instance;
-    }
-
-    @Override
-    public Builder acceptMutable(org.jsonddl.JsonDdlVisitor visitor) {
-      obj = new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<EnumValue>().withValue(obj)
-          .withKind(org.jsonddl.model.Kind.DDL).withMutability(true).build().traverse(visitor);
-      return this;
-    }
-
-    @Override
-    public EnumValue build() {
-      EnumValue toReturn = obj;
-      obj = null;
-      return toReturn;
-    }
-
-    @Override
-    public Builder from(EnumValue from) {
-      withComment(from.getComment());
-      withName(from.getName());
-      return this;
-    }
-
-    @Override
-    public Builder from(java.util.Map<String, Object> map) {
-      acceptMutable(org.jsonddl.JsonMapVisitor.fromJsonMap(map));
-      return this;
-    }
-
-    @Override
-    public Builder traverseMutable(org.jsonddl.JsonDdlVisitor visitor) {
-      withComment(new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
-          .withKind(org.jsonddl.model.Kind.STRING)
-          .withLeafType(java.lang.String.class)
-          .withMutability(true)
-          .withProperty("comment")
-          .withValue(obj.comment)
-          .build().traverse(visitor));
-      withName(new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
-          .withKind(org.jsonddl.model.Kind.STRING)
-          .withLeafType(java.lang.String.class)
-          .withMutability(true)
-          .withProperty("name")
-          .withValue(obj.name)
-          .build().traverse(visitor));
-
-      return this;
-    }
-
-    public Builder withComment(java.lang.String value) {
-      obj.comment = value;
-      return this;
-    }
-
-    public Builder withName(java.lang.String value) {
-      obj.name = value;
-      return this;
-    }
-  }
-
-  private java.lang.String comment;
-
-  private java.lang.String name;
-
-  private EnumValue() {}
-
-  @Override
-  public void accept(org.jsonddl.JsonDdlVisitor visitor) {
-    new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<EnumValue>().withValue(this)
-        .withKind(org.jsonddl.model.Kind.DDL).build().traverse(visitor);
-  }
-
-  @Override
-  public Builder builder() {
-    return newInstance().from(this);
-  }
-
-  public java.lang.String getComment() {
-    return comment;
-  }
-
-  public java.lang.String getName() {
-    return name;
-  }
-
-  @Override
-  public Builder newInstance() {
-    return new Builder();
-  }
-
-  @Override
-  public java.util.Map<String, Object> toJsonObject() {
-    return org.jsonddl.JsonMapVisitor.toJsonObject(this);
-  }
-
-  @Override
-  public void traverse(org.jsonddl.JsonDdlVisitor visitor) {
-    new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
-        .withKind(org.jsonddl.model.Kind.STRING)
-        .withLeafType(java.lang.String.class)
-        .withMutability(false)
-        .withProperty("comment")
-        .withValue(this.comment)
-        .build().traverse(visitor);
-    new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
-        .withKind(org.jsonddl.model.Kind.STRING)
-        .withLeafType(java.lang.String.class)
-        .withMutability(false)
-        .withProperty("name")
-        .withValue(this.name)
-        .build().traverse(visitor);
-
-  }
+return this;
+}
+}
+Builder builder();
+Builder newInstance();
 }

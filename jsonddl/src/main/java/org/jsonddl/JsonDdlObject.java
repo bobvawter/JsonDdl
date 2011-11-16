@@ -15,9 +15,9 @@ package org.jsonddl;
 
 import java.util.Map;
 
-public interface JsonDdlObject<J extends JsonDdlObject<J>> {
-  public interface Builder<J extends JsonDdlObject<J>> {
-    Builder<J> acceptMutable(JsonDdlVisitor visitor);
+public interface JsonDdlObject {
+  public interface Builder<J extends JsonDdlObject> {
+    Builder<J> accept(JsonDdlVisitor visitor);
 
     J build();
 
@@ -25,20 +25,22 @@ public interface JsonDdlObject<J extends JsonDdlObject<J>> {
 
     Builder<J> from(Map<String, Object> map);
 
-    Builder<J> traverseMutable(JsonDdlVisitor visitor);
+    Builder<J> traverse(JsonDdlVisitor visitor);
   }
 
-  void accept(JsonDdlVisitor visitor);
+  JsonDdlObject accept(JsonDdlVisitor visitor);
 
   //
   // <O extends JsonDdlObject<O>> O as(Class<O> clazz);
   //
-  Builder<J> builder();
+  Builder<? extends JsonDdlObject> builder();
 
-  Builder<J> newInstance();
+  Class<? extends JsonDdlObject> getDdlObjectType();
+
+  Builder<? extends JsonDdlObject> newInstance();
 
   Map<String, Object> toJsonObject();
 
-  void traverse(JsonDdlVisitor visitor);
+  JsonDdlObject traverse(JsonDdlVisitor visitor);
 
 }

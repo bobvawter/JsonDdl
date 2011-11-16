@@ -82,6 +82,9 @@ public class Protected {
     if (value instanceof Enum<?>) {
       return value;
     }
+    if (value instanceof JsonDdlObject.Builder) {
+      return (T) ((JsonDdlObject.Builder<?>) value).build();
+    }
     if (value instanceof JsonDdlObject) {
       return value;
     }

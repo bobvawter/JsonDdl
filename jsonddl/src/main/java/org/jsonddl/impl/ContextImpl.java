@@ -75,8 +75,8 @@ public abstract class ContextImpl<J> implements Context<J> {
   /**
    * Allows traversal of a {@link List} of {@link JsonDdlObject} instances.
    */
-  public static class ListContext<J extends JsonDdlObject<J>> extends PropertyContext<J, List<J>> {
-    public static class Builder<J extends JsonDdlObject<J>> extends
+  public static class ListContext<J extends JsonDdlObject> extends PropertyContext<J, List<J>> {
+    public static class Builder<J extends JsonDdlObject> extends
         ContextImpl.Builder<ListContext<J>, List<J>> {
       public Builder() {
         super(new ListContext<J>());
@@ -141,9 +141,9 @@ public abstract class ContextImpl<J> implements Context<J> {
     }
   }
 
-  public static class MapContext<J extends JsonDdlObject<J>> extends
+  public static class MapContext<J extends JsonDdlObject> extends
       PropertyContext<J, Map<String, J>> {
-    public static class Builder<J extends JsonDdlObject<J>> extends
+    public static class Builder<J extends JsonDdlObject> extends
         ContextImpl.Builder<MapContext<J>, Map<String, J>> {
       public Builder() {
         super(new MapContext<J>());
@@ -201,8 +201,8 @@ public abstract class ContextImpl<J> implements Context<J> {
   /**
    * Allows the traversal of a single {@link JsonDdlObject}.
    */
-  public static class ObjectContext<J extends JsonDdlObject<J>> extends ValueContext<J> {
-    public static class Builder<J extends JsonDdlObject<J>> extends ValueContext.Builder<J> {
+  public static class ObjectContext<J extends JsonDdlObject> extends ValueContext<J> {
+    public static class Builder<J extends JsonDdlObject> extends ValueContext.Builder<J> {
       public Builder() {
         super(new ObjectContext<J>());
       }
@@ -214,7 +214,7 @@ public abstract class ContextImpl<J> implements Context<J> {
     protected void doTraverse(JsonDdlVisitor visitor) {
       if (VisitSupport.visit(visitor, value, this)) {
         if (isMutable()) {
-          J temp = value.builder().traverseMutable(visitor).build();
+          J temp = (J) value.builder().traverse(visitor);
           if (!didChange) {
             value = temp;
           }
