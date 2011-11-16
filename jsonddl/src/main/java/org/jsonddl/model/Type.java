@@ -1,6 +1,6 @@
 package org.jsonddl.model;
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-15T23:47:54")
-public interface Type extends org.jsonddl.JsonDdlObject {
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T00:09:10")
+public interface Type extends org.jsonddl.JsonDdlObject<Type> {
 java.lang.String getName();
 Kind getKind();
 Type getListElement();
@@ -15,36 +15,36 @@ Type toReturn = obj;
 obj = null;
 return toReturn;
 }
-public Builder builder() { return this; }
+public Type.Builder builder() { return this; }
 public Class<Type> getDdlObjectType() { return Type.class;}
-public Builder newInstance() { return new Builder(); }
+public Type.Builder newInstance() { return new Type.Builder(); }
 public java.util.Map<String, Object> toJsonObject() { return obj.toJsonObject(); }
 public java.lang.String getName() { return obj.name; }
-public Builder withName(java.lang.String value) { obj.name = value;return this;}
+public Type.Builder withName(java.lang.String value) { obj.name = value;return this;}
 public Kind getKind() { return obj.kind; }
-public Builder withKind(Kind value) { obj.kind = value;return this;}
+public Type.Builder withKind(Kind value) { obj.kind = value;return this;}
 public Type getListElement() { return obj.listElement; }
-public Builder withListElement(Type value) { obj.listElement = value;return this;}
+public Type.Builder withListElement(Type value) { obj.listElement = value;return this;}
 public Type getMapKey() { return obj.mapKey; }
-public Builder withMapKey(Type value) { obj.mapKey = value;return this;}
+public Type.Builder withMapKey(Type value) { obj.mapKey = value;return this;}
 public Type getMapValue() { return obj.mapValue; }
-public Builder withMapValue(Type value) { obj.mapValue = value;return this;}
-public Builder accept(org.jsonddl.JsonDdlVisitor visitor) {
+public Type.Builder withMapValue(Type value) { obj.mapValue = value;return this;}
+public Type.Builder accept(org.jsonddl.JsonDdlVisitor visitor) {
 obj = new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Type>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).withMutability(true).build().traverse(visitor).builder().obj;
 return this;
 }
-public Builder from(Type from) {
+public Type.Builder from(Type from) {
 withName(from.getName());
 withKind(from.getKind());
 withListElement(from.getListElement());
 withMapKey(from.getMapKey());
 withMapValue(from.getMapValue());
 return this;}
-public Builder from(java.util.Map<String, Object> map){
+public Type.Builder from(java.util.Map<String, Object> map){
 accept(org.jsonddl.JsonMapVisitor.fromJsonMap(map));
 return this;
 }
-public Builder traverse(org.jsonddl.JsonDdlVisitor visitor) {
+public Type.Builder traverse(org.jsonddl.JsonDdlVisitor visitor) {
 withName(
 new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
 .withKind(org.jsonddl.model.Kind.STRING)
@@ -105,8 +105,8 @@ public Type getMapValue() {return mapValue;}
 public Type accept(org.jsonddl.JsonDdlVisitor visitor) {
 return new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Type>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).build().traverse(visitor);
 }
-public Builder builder() { return newInstance().from(this); }
-public Builder newInstance() { return new Builder(); }
+public Type.Builder builder() { return newInstance().from(this); }
+public Type.Builder newInstance() { return new Builder(); }
 public java.util.Map<String,Object> toJsonObject() { return org.jsonddl.JsonMapVisitor.toJsonObject(this); }
 public Type traverse(org.jsonddl.JsonDdlVisitor visitor) {
 new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()

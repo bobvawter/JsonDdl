@@ -15,32 +15,29 @@ package org.jsonddl;
 
 import java.util.Map;
 
-public interface JsonDdlObject {
-  public interface Builder<J extends JsonDdlObject> {
-    Builder<J> accept(JsonDdlVisitor visitor);
-
+public interface JsonDdlObject<J extends JsonDdlObject<J>> {
+  public interface Builder<J extends JsonDdlObject<J>> extends JsonDdlObject<J> {
     J build();
 
     Builder<J> from(J copyFrom);
 
     Builder<J> from(Map<String, Object> map);
 
-    Builder<J> traverse(JsonDdlVisitor visitor);
   }
 
-  JsonDdlObject accept(JsonDdlVisitor visitor);
+  J accept(JsonDdlVisitor visitor);
 
   //
   // <O extends JsonDdlObject<O>> O as(Class<O> clazz);
   //
-  Builder<? extends JsonDdlObject> builder();
+  Builder<J> builder();
 
-  Class<? extends JsonDdlObject> getDdlObjectType();
+  Class<J> getDdlObjectType();
 
-  Builder<? extends JsonDdlObject> newInstance();
+  Builder<J> newInstance();
 
   Map<String, Object> toJsonObject();
 
-  JsonDdlObject traverse(JsonDdlVisitor visitor);
+  J traverse(JsonDdlVisitor visitor);
 
 }

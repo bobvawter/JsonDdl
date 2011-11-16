@@ -3,8 +3,8 @@ package org.jsonddl.model;
      * A model represents a single kind of object within the schema. There is a
      * 1:1 correspondence between Models and Java classes or JS type closures.
      */
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-15T23:47:54")
-public interface Model extends org.jsonddl.JsonDdlObject {
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T00:09:10")
+public interface Model extends org.jsonddl.JsonDdlObject<Model> {
 java.lang.String getComment();
 java.util.List<EnumValue> getEnumValues();
 java.lang.String getName();
@@ -18,33 +18,33 @@ Model toReturn = obj;
 obj = null;
 return toReturn;
 }
-public Builder builder() { return this; }
+public Model.Builder builder() { return this; }
 public Class<Model> getDdlObjectType() { return Model.class;}
-public Builder newInstance() { return new Builder(); }
+public Model.Builder newInstance() { return new Model.Builder(); }
 public java.util.Map<String, Object> toJsonObject() { return obj.toJsonObject(); }
 public java.lang.String getComment() { return obj.comment; }
-public Builder withComment(java.lang.String value) { obj.comment = value;return this;}
+public Model.Builder withComment(java.lang.String value) { obj.comment = value;return this;}
 public java.util.List<EnumValue> getEnumValues() { return obj.enumValues; }
-public Builder withEnumValues(java.util.List<EnumValue> value) { obj.enumValues = org.jsonddl.impl.Protected.object(value);return this;}
+public Model.Builder withEnumValues(java.util.List<EnumValue> value) { obj.enumValues = org.jsonddl.impl.Protected.object(value);return this;}
 public java.lang.String getName() { return obj.name; }
-public Builder withName(java.lang.String value) { obj.name = value;return this;}
+public Model.Builder withName(java.lang.String value) { obj.name = value;return this;}
 public java.util.List<Property> getProperties() { return obj.properties; }
-public Builder withProperties(java.util.List<Property> value) { obj.properties = org.jsonddl.impl.Protected.object(value);return this;}
-public Builder accept(org.jsonddl.JsonDdlVisitor visitor) {
+public Model.Builder withProperties(java.util.List<Property> value) { obj.properties = org.jsonddl.impl.Protected.object(value);return this;}
+public Model.Builder accept(org.jsonddl.JsonDdlVisitor visitor) {
 obj = new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Model>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).withMutability(true).build().traverse(visitor).builder().obj;
 return this;
 }
-public Builder from(Model from) {
+public Model.Builder from(Model from) {
 withComment(from.getComment());
 withEnumValues(from.getEnumValues());
 withName(from.getName());
 withProperties(from.getProperties());
 return this;}
-public Builder from(java.util.Map<String, Object> map){
+public Model.Builder from(java.util.Map<String, Object> map){
 accept(org.jsonddl.JsonMapVisitor.fromJsonMap(map));
 return this;
 }
-public Builder traverse(org.jsonddl.JsonDdlVisitor visitor) {
+public Model.Builder traverse(org.jsonddl.JsonDdlVisitor visitor) {
 withComment(
 new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
 .withKind(org.jsonddl.model.Kind.STRING)
@@ -97,8 +97,8 @@ public java.util.List<Property> getProperties() {return properties;}
 public Model accept(org.jsonddl.JsonDdlVisitor visitor) {
 return new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Model>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).build().traverse(visitor);
 }
-public Builder builder() { return newInstance().from(this); }
-public Builder newInstance() { return new Builder(); }
+public Model.Builder builder() { return newInstance().from(this); }
+public Model.Builder newInstance() { return new Builder(); }
 public java.util.Map<String,Object> toJsonObject() { return org.jsonddl.JsonMapVisitor.toJsonObject(this); }
 public Model traverse(org.jsonddl.JsonDdlVisitor visitor) {
 new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
