@@ -3,7 +3,7 @@ package org.jsonddl.model;
      * A model represents a single kind of object within the schema. There is a
      * 1:1 correspondence between Models and Java classes or JS type closures.
      */
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-14T00:36:14")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-15T21:53:00")
 public class Model implements org.jsonddl.JsonDdlObject<Model> {
 private java.lang.String comment;
 public java.lang.String getComment() {return comment;}
@@ -37,7 +37,7 @@ withName(from.getName());
 withProperties(from.getProperties());
 return this;}
 public Builder from(java.util.Map<String, Object> map){
-acceptMutable(org.jsonddl.JsonStringVisitor.fromJsonMap(map));
+acceptMutable(org.jsonddl.JsonMapVisitor.fromJsonMap(map));
 return this;
 }
 public Builder traverseMutable(org.jsonddl.JsonDdlVisitor visitor) {
@@ -85,7 +85,7 @@ new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Model>().withValue(this).
 }
 public Builder builder() { return newInstance().from(this); }
 public Builder newInstance() { return new Builder(); }
-public String toJson() { return org.jsonddl.JsonStringVisitor.toJsonString(this); }
+public java.util.Map<String,Object> toJsonObject() { return org.jsonddl.JsonMapVisitor.toJsonObject(this); }
 public void traverse(org.jsonddl.JsonDdlVisitor visitor) {
 new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
 .withKind(org.jsonddl.model.Kind.STRING)

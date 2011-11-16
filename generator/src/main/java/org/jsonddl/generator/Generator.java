@@ -35,11 +35,9 @@ import java.util.TreeMap;
 
 import javax.annotation.Generated;
 
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
-import org.jsonddl.JsonStringVisitor;
+import org.jsonddl.JsonMapVisitor;
 import org.jsonddl.impl.ContextImpl;
 import org.jsonddl.impl.Protected;
 import org.jsonddl.model.EnumValue;
@@ -174,15 +172,6 @@ public class Generator {
       models.put(extractName(prop), builder.build());
     }
     Schema s = new Schema.Builder().withModels(models).acceptMutable(new DdlTypeReplacer()).build();
-    String json = s.toJson();
-    System.out.println(json);
-    try {
-      Object o = new JSONParser().parse(json);
-      Schema s2 = new Schema.Builder().from((Map<String, Object>) o).build();
-      System.out.println(s2.toJson());
-    } catch (ParseException e) {
-      e.printStackTrace();
-    }
     generateIndustrialObjects(packageName, output, s);
     return true;
   }
@@ -324,7 +313,7 @@ public class Generator {
 
       builder.println("public Builder from(" + Map.class.getCanonicalName()
         + "<String, Object> map){");
-      builder.println("acceptMutable(" + JsonStringVisitor.class.getCanonicalName()
+      builder.println("acceptMutable(" + JsonMapVisitor.class.getCanonicalName()
         + ".fromJsonMap(map));");
       builder.println("return this;");
       builder.println("}");
@@ -351,8 +340,9 @@ public class Generator {
       out.println("public Builder builder() { return newInstance().from(this); }");
       out.println("public Builder newInstance() { return new Builder(); }");
 
-      out.println("public String toJson() { return " + JsonStringVisitor.class.getCanonicalName()
-        + ".toJsonString(this); }");
+      out.println("public " + Map.class.getCanonicalName()
+        + "<String,Object> toJsonObject() { return " + JsonMapVisitor.class.getCanonicalName()
+        + ".toJsonObject(this); }");
 
       out.println("public void traverse(" + JsonDdlVisitor.class.getCanonicalName()
         + " visitor) {");

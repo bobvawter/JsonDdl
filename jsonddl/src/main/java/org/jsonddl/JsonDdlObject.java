@@ -37,7 +37,7 @@ public interface JsonDdlObject<J extends JsonDdlObject<J>> {
 
   Builder<J> newInstance();
 
-  String toJson();
+  Map<String, Object> toJsonObject();
 
   void traverse(JsonDdlVisitor visitor);
 

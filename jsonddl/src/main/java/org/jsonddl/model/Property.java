@@ -2,7 +2,7 @@ package org.jsonddl.model;
 /**
      * A property is a pair of a name and a type.
      */
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-14T00:36:14")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-15T21:53:00")
 public class Property implements org.jsonddl.JsonDdlObject<Property> {
 private java.lang.String comment;
 /**
@@ -35,7 +35,7 @@ withName(from.getName());
 withType(from.getType());
 return this;}
 public Builder from(java.util.Map<String, Object> map){
-acceptMutable(org.jsonddl.JsonStringVisitor.fromJsonMap(map));
+acceptMutable(org.jsonddl.JsonMapVisitor.fromJsonMap(map));
 return this;
 }
 public Builder traverseMutable(org.jsonddl.JsonDdlVisitor visitor) {
@@ -73,7 +73,7 @@ new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Property>().withValue(thi
 }
 public Builder builder() { return newInstance().from(this); }
 public Builder newInstance() { return new Builder(); }
-public String toJson() { return org.jsonddl.JsonStringVisitor.toJsonString(this); }
+public java.util.Map<String,Object> toJsonObject() { return org.jsonddl.JsonMapVisitor.toJsonObject(this); }
 public void traverse(org.jsonddl.JsonDdlVisitor visitor) {
 new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
 .withKind(org.jsonddl.model.Kind.STRING)
