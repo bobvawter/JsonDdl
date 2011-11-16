@@ -3,7 +3,7 @@ package org.jsonddl.model;
      * A Schema is the top-level object that encapsulates the normalized form of
      * a json-ddl schema.
      */
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T00:09:10")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T00:27:15")
 public interface Schema extends org.jsonddl.JsonDdlObject<Schema> {
 /**
 	 * A map of object models by simple name.
@@ -13,20 +13,21 @@ public static class Builder implements org.jsonddl.JsonDdlObject.Builder<Schema>
 private Schema.Impl obj;
 public Builder() {this(new Schema.Impl());}
 public Builder(Schema.Impl instance) {this.obj = instance;}
-public Schema build() {
-Schema toReturn = obj;
-obj = null;
-return toReturn;
-}
 public Schema.Builder builder() { return this; }
 public Class<Schema> getDdlObjectType() { return Schema.class;}
 public Schema.Builder newInstance() { return new Schema.Builder(); }
 public java.util.Map<String, Object> toJsonObject() { return obj.toJsonObject(); }
 public java.util.Map<java.lang.String,Model> getModels() { return obj.models; }
-public Schema.Builder withModels(java.util.Map<java.lang.String,Model> value) { obj.models = org.jsonddl.impl.Protected.object(value);return this;}
+public Schema.Builder withModels(java.util.Map<java.lang.String,Model> value) { obj.models = value;return this;}
 public Schema.Builder accept(org.jsonddl.JsonDdlVisitor visitor) {
 obj = new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Schema>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).withMutability(true).build().traverse(visitor).builder().obj;
 return this;
+}
+public Schema build() {
+Schema.Impl toReturn = obj;
+obj = null;
+toReturn.models = org.jsonddl.impl.Protected.object(toReturn.models);
+return toReturn;
 }
 public Schema.Builder from(Schema from) {
 withModels(from.getModels());
@@ -45,7 +46,6 @@ new org.jsonddl.impl.ContextImpl.MapContext.Builder<Model>()
 .withProperty("models")
 .withValue(obj.models)
 .build().traverse(visitor));
-
 return this;
 }
 }
@@ -69,7 +69,6 @@ new org.jsonddl.impl.ContextImpl.MapContext.Builder<Model>()
 .withProperty("models")
 .withValue(this.models)
 .build().traverse(visitor);
-
 return this;
 }
 }

@@ -1,5 +1,5 @@
 package org.jsonddl.model;
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T00:09:10")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T00:27:15")
 public interface EnumValue extends org.jsonddl.JsonDdlObject<EnumValue> {
 java.lang.String getComment();
 java.lang.String getName();
@@ -7,11 +7,6 @@ public static class Builder implements org.jsonddl.JsonDdlObject.Builder<EnumVal
 private EnumValue.Impl obj;
 public Builder() {this(new EnumValue.Impl());}
 public Builder(EnumValue.Impl instance) {this.obj = instance;}
-public EnumValue build() {
-EnumValue toReturn = obj;
-obj = null;
-return toReturn;
-}
 public EnumValue.Builder builder() { return this; }
 public Class<EnumValue> getDdlObjectType() { return EnumValue.class;}
 public EnumValue.Builder newInstance() { return new EnumValue.Builder(); }
@@ -23,6 +18,11 @@ public EnumValue.Builder withName(java.lang.String value) { obj.name = value;ret
 public EnumValue.Builder accept(org.jsonddl.JsonDdlVisitor visitor) {
 obj = new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<EnumValue>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).withMutability(true).build().traverse(visitor).builder().obj;
 return this;
+}
+public EnumValue build() {
+EnumValue.Impl toReturn = obj;
+obj = null;
+return toReturn;
 }
 public EnumValue.Builder from(EnumValue from) {
 withComment(from.getComment());
@@ -49,7 +49,6 @@ new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
 .withProperty("name")
 .withValue(obj.name)
 .build().traverse(visitor));
-
 return this;
 }
 }
@@ -81,7 +80,6 @@ new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
 .withProperty("name")
 .withValue(this.name)
 .build().traverse(visitor);
-
 return this;
 }
 }

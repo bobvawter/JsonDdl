@@ -260,11 +260,6 @@ public class Generator {
         builder.println("private " + simpleName + ".Impl obj;");
         builder.println("public Builder() {this(new " + simpleName + ".Impl());}");
         builder.println("public Builder(" + simpleName + ".Impl instance) {this.obj = instance;}");
-        builder.println("public " + simpleName + " build() {");
-        builder.println(simpleName + " toReturn = obj;");
-        builder.println("obj = null;");
-        builder.println("return toReturn;");
-        builder.println("}");
         builder.println("public " + builderName + " builder() { return this; }");
         builder.println("public Class<" + simpleName + "> getDdlObjectType() { return "
           + simpleName + ".class;}");
@@ -281,6 +276,8 @@ public class Generator {
         impl.println("public Class<" + simpleName + "> getDdlObjectType() { return "
           + simpleName + ".class;}");
       }
+      StringWriter buildContents = new StringWriter();
+      PrintWriter build = new PrintWriter(buildContents);
       StringWriter fromContents = new StringWriter();
       PrintWriter from = new PrintWriter(fromContents);
       StringWriter traverseContents = new StringWriter();
@@ -303,16 +300,16 @@ public class Generator {
         }
         intf.println(qsn + " get" + getterName + "();");
 
+        if (TypeAnswers.shouldProtect(type)) {
+          build.println("toReturn." + propName + " = " + Protected.class.getCanonicalName()
+            + ".object(toReturn." + propName + ");");
+        }
+
         builder.println("public " + qsn + " get" + getterName + "() { return obj." + propName
           + "; }");
         builder.print(
             "public " + builderName + " with" + getterName + "(" + qsn + " value) { ");
-        if (TypeAnswers.shouldProtect(type)) {
-          builder.print("obj." + propName + " = " + Protected.class.getCanonicalName()
-            + ".object(value);");
-        } else {
-          builder.print("obj." + propName + " = value;");
-        }
+        builder.print("obj." + propName + " = value;");
         builder.println("return this;}");
 
         from.println("with" + getterName + "(from.get" + getterName + "());");
@@ -331,6 +328,13 @@ public class Generator {
       builder.println("return this;");
       builder.println("}");
 
+      builder.println("public " + simpleName + " build() {");
+      builder.println(simpleName + ".Impl toReturn = obj;");
+      builder.println("obj = null;");
+      builder.append(buildContents.getBuffer().toString());
+      builder.println("return toReturn;");
+      builder.println("}");
+
       builder.println("public " + builderName + " from(" + simpleName + " from) {");
       builder.append(fromContents.getBuffer());
       builder.append("return this;");
@@ -346,7 +350,7 @@ public class Generator {
       builder.println("public " + builderName + " traverse("
           + JsonDdlVisitor.class.getCanonicalName()
           + " visitor) {");
-      builder.println(traverseMutableContents.getBuffer());
+      builder.append(traverseMutableContents.getBuffer().toString());
       builder.println("return this;");
       builder.println("}");
       builder.println("}");
@@ -370,7 +374,7 @@ public class Generator {
 
       impl.println("public " + simpleName + " traverse(" + JsonDdlVisitor.class.getCanonicalName()
         + " visitor) {");
-      impl.println(traverseContents.getBuffer());
+      impl.append(traverseContents.getBuffer().toString());
       impl.println("return this;");
       impl.println("}");
       impl.println("}");

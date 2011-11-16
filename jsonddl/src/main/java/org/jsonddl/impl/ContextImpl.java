@@ -89,6 +89,21 @@ public abstract class ContextImpl<J> implements Context<J> {
     ListContext() {}
 
     @Override
+    public boolean canInsert() {
+      return isMutable();
+    }
+
+    @Override
+    public boolean canRemove() {
+      return isMutable();
+    }
+
+    @Override
+    public boolean canReplace() {
+      return isMutable();
+    }
+
+    @Override
     public void insertAfter(J next) {
       if (isMutable()) {
         it.add(next);
@@ -105,6 +120,15 @@ public abstract class ContextImpl<J> implements Context<J> {
         it = value.listIterator(current + 1);
       } else {
         super.insertBefore(previous);
+      }
+    }
+
+    @Override
+    public void remove() {
+      if (isMutable()) {
+        it.remove();
+      } else {
+        super.remove();
       }
     }
 
@@ -155,6 +179,16 @@ public abstract class ContextImpl<J> implements Context<J> {
     private Iterator<Map.Entry<String, J>> it;
 
     MapContext() {}
+
+    @Override
+    public boolean canRemove() {
+      return isMutable();
+    }
+
+    @Override
+    public boolean canReplace() {
+      return isMutable();
+    }
 
     @Override
     public void remove() {
@@ -244,6 +278,11 @@ public abstract class ContextImpl<J> implements Context<J> {
 
     ValueContext() {}
 
+    @Override
+    public boolean canReplace() {
+      return isMutable();
+    }
+
     public T getValue() {
       return value;
     }
@@ -319,6 +358,21 @@ public abstract class ContextImpl<J> implements Context<J> {
   String property;
 
   ContextImpl() {}
+
+  @Override
+  public boolean canInsert() {
+    return false;
+  }
+
+  @Override
+  public boolean canRemove() {
+    return false;
+  }
+
+  @Override
+  public boolean canReplace() {
+    return false;
+  }
 
   @Override
   public Kind getKind() {

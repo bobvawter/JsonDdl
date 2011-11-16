@@ -22,6 +22,12 @@ import org.jsonddl.model.Kind;
  */
 public interface JsonDdlVisitor {
   public interface Context<J> {
+    boolean canInsert();
+
+    boolean canRemove();
+
+    boolean canReplace();
+
     Kind getKind();
 
     Class<?> getLeafType();

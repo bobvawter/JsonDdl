@@ -20,6 +20,13 @@ public class Protected {
     unmodifiableMapClass = Collections.unmodifiableMap(testMap).getClass();
   }
 
+  public static <J extends JsonDdlObject<J>> J object(J value) {
+    if (value instanceof JsonDdlObject.Builder) {
+      return ((JsonDdlObject.Builder<J>) value).build();
+    }
+    return value;
+  }
+
   public static <T> List<T> object(List<T> values) {
     if (values == null) {
       return null;

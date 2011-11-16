@@ -2,7 +2,7 @@ package org.jsonddl.model;
 /**
      * A property is a pair of a name and a type.
      */
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T00:09:10")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T00:27:15")
 public interface Property extends org.jsonddl.JsonDdlObject<Property> {
 /**
 	 * This comment will be stored in this property.
@@ -14,11 +14,6 @@ public static class Builder implements org.jsonddl.JsonDdlObject.Builder<Propert
 private Property.Impl obj;
 public Builder() {this(new Property.Impl());}
 public Builder(Property.Impl instance) {this.obj = instance;}
-public Property build() {
-Property toReturn = obj;
-obj = null;
-return toReturn;
-}
 public Property.Builder builder() { return this; }
 public Class<Property> getDdlObjectType() { return Property.class;}
 public Property.Builder newInstance() { return new Property.Builder(); }
@@ -32,6 +27,12 @@ public Property.Builder withType(Type value) { obj.type = value;return this;}
 public Property.Builder accept(org.jsonddl.JsonDdlVisitor visitor) {
 obj = new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Property>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).withMutability(true).build().traverse(visitor).builder().obj;
 return this;
+}
+public Property build() {
+Property.Impl toReturn = obj;
+obj = null;
+toReturn.type = org.jsonddl.impl.Protected.object(toReturn.type);
+return toReturn;
 }
 public Property.Builder from(Property from) {
 withComment(from.getComment());
@@ -67,7 +68,6 @@ new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Type>()
 .withProperty("type")
 .withValue(obj.type)
 .build().traverse(visitor));
-
 return this;
 }
 }
@@ -108,7 +108,6 @@ new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Type>()
 .withProperty("type")
 .withValue(this.type)
 .build().traverse(visitor);
-
 return this;
 }
 }

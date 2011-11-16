@@ -1,5 +1,5 @@
 package org.jsonddl.model;
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T00:09:10")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T00:27:15")
 public interface Type extends org.jsonddl.JsonDdlObject<Type> {
 java.lang.String getName();
 Kind getKind();
@@ -10,11 +10,6 @@ public static class Builder implements org.jsonddl.JsonDdlObject.Builder<Type>, 
 private Type.Impl obj;
 public Builder() {this(new Type.Impl());}
 public Builder(Type.Impl instance) {this.obj = instance;}
-public Type build() {
-Type toReturn = obj;
-obj = null;
-return toReturn;
-}
 public Type.Builder builder() { return this; }
 public Class<Type> getDdlObjectType() { return Type.class;}
 public Type.Builder newInstance() { return new Type.Builder(); }
@@ -32,6 +27,14 @@ public Type.Builder withMapValue(Type value) { obj.mapValue = value;return this;
 public Type.Builder accept(org.jsonddl.JsonDdlVisitor visitor) {
 obj = new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Type>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).withMutability(true).build().traverse(visitor).builder().obj;
 return this;
+}
+public Type build() {
+Type.Impl toReturn = obj;
+obj = null;
+toReturn.listElement = org.jsonddl.impl.Protected.object(toReturn.listElement);
+toReturn.mapKey = org.jsonddl.impl.Protected.object(toReturn.mapKey);
+toReturn.mapValue = org.jsonddl.impl.Protected.object(toReturn.mapValue);
+return toReturn;
 }
 public Type.Builder from(Type from) {
 withName(from.getName());
@@ -85,7 +88,6 @@ new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Type>()
 .withProperty("mapValue")
 .withValue(obj.mapValue)
 .build().traverse(visitor));
-
 return this;
 }
 }
@@ -144,7 +146,6 @@ new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Type>()
 .withProperty("mapValue")
 .withValue(this.mapValue)
 .build().traverse(visitor);
-
 return this;
 }
 }

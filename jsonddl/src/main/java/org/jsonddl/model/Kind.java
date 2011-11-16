@@ -3,7 +3,7 @@ package org.jsonddl.model;
      * This is a simplified type system, representing only the types of data
      * that can be directly expressed in JSON.
      */
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T00:09:10")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T00:27:15")
 public enum Kind {
 BOOLEAN,
 DDL,

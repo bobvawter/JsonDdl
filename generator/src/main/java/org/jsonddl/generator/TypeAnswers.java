@@ -110,6 +110,7 @@ class TypeAnswers {
 
   public static boolean shouldProtect(Type type) {
     switch (type.getKind()) {
+      case DDL:
       case LIST:
       case MAP:
         return true;
