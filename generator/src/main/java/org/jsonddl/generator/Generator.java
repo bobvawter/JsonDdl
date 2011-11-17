@@ -216,6 +216,7 @@ public class Generator {
     for (Model model : s.getModels().values()) {
       String simpleName = model.getName();
       String builderName = simpleName + ".Builder";
+      String implName = simpleName + "Impl";
 
       PrintWriter intf = new PrintWriter(new OutputStreamWriter(output.writeImplementation(
           packageName, simpleName)));
@@ -224,8 +225,9 @@ public class Generator {
       if (model.getComment() != null) {
         intf.println(model.getComment());
       }
-      intf.println("@" + Generated.class.getCanonicalName() + "(value=\""
-        + getClass().getCanonicalName() + "\", date=\"" + sdf.format(now) + "\")");
+      String generated = "@" + Generated.class.getCanonicalName() + "(value=\""
+        + getClass().getCanonicalName() + "\", date=\"" + sdf.format(now) + "\")";
+      intf.println(generated);
 
       if (model.getEnumValues() != null) {
         intf.println("public enum " + simpleName + " {");
@@ -257,9 +259,9 @@ public class Generator {
         builder.println("public static class Builder implements "
           + JsonDdlObject.Builder.class.getCanonicalName() + "<" + simpleName + ">, " + simpleName
           + " {");
-        builder.println("private " + simpleName + ".Impl obj;");
-        builder.println("public Builder() {this(new " + simpleName + ".Impl());}");
-        builder.println("public Builder(" + simpleName + ".Impl instance) {this.obj = instance;}");
+        builder.println("private " + implName + " obj;");
+        builder.println("public Builder() {this(new " + implName + "());}");
+        builder.println("Builder(" + implName + " instance) {this.obj = instance;}");
         builder.println("public " + builderName + " builder() { return this; }");
         builder.println("public Class<" + simpleName + "> getDdlObjectType() { return "
           + simpleName + ".class;}");
@@ -268,11 +270,14 @@ public class Generator {
         builder.println("public " + Map.class.getCanonicalName()
           + "<String, Object> toJsonObject() { return obj.toJsonObject(); }");
       }
-      StringWriter implContents = new StringWriter();
-      PrintWriter impl = new PrintWriter(implContents);
+
+      PrintWriter impl = new PrintWriter(new OutputStreamWriter(output.writeImplementation(
+          packageName, implName)));
       {
-        impl.println("public static class Impl implements " + simpleName + " {");
-        impl.println("protected Impl() {}");
+        impl.println("package " + packageName + ";");
+        impl.println(generated);
+        impl.println("class " + implName + " implements " + simpleName + " {");
+        impl.println("protected " + implName + "() {}");
         impl.println("public Class<" + simpleName + "> getDdlObjectType() { return "
           + simpleName + ".class;}");
       }
@@ -291,7 +296,7 @@ public class Generator {
           + (propName.length() > 1 ? propName.substring(1) : "");
 
         String qsn = getParameterizedQualifiedSourceName(type);
-        impl.println("private " + qsn + " " + propName + ";");
+        impl.println(qsn + " " + propName + ";");
         impl.println("public " + qsn + " get" + getterName + "() {return "
             + propName + ";}");
 
@@ -305,8 +310,20 @@ public class Generator {
             + ".object(toReturn." + propName + ");");
         }
 
-        builder.println("public " + qsn + " get" + getterName + "() { return obj." + propName
-          + "; }");
+        if (Kind.DDL.equals(type.getKind())) {
+          // public Foo.Builder getFoo() { Foo.Builder toReturn = obj.foo.builder();
+          builder.println("public " + qsn + ".Builder"
+            + " get" + getterName + "() {");
+          builder.println(qsn + ".Builder toReturn = obj." + propName + ".builder();");
+          builder.println("obj." + propName + " = toReturn;");
+          builder.println("return toReturn;");
+          builder.println("}");
+        } else {
+          builder.println("public " + qsn + " get" + getterName + "() { return obj." + propName
+            + "; }");
+        }
+        builder.println("public void set" + getterName + "(" + qsn + " value) { with" + getterName
+          + "(value);}");
         builder.print(
             "public " + builderName + " with" + getterName + "(" + qsn + " value) { ");
         builder.print("obj." + propName + " = value;");
@@ -329,7 +346,7 @@ public class Generator {
       builder.println("}");
 
       builder.println("public " + simpleName + " build() {");
-      builder.println(simpleName + ".Impl toReturn = obj;");
+      builder.println(implName + " toReturn = obj;");
       builder.println("obj = null;");
       builder.append(buildContents.getBuffer().toString());
       builder.println("return toReturn;");
@@ -379,13 +396,13 @@ public class Generator {
       impl.println("}");
       impl.println("}");
       // END IMPL
-      intf.append(implContents.getBuffer().toString());
 
       intf.println("Builder builder();");
       intf.println("Builder newInstance();");
       intf.println("}");
 
       intf.close();
+      impl.close();
     }
   }
 

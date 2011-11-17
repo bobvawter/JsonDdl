@@ -2,7 +2,7 @@ package org.jsonddl.model;
 /**
      * A property is a pair of a name and a type.
      */
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T00:27:15")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T21:33:15")
 public interface Property extends org.jsonddl.JsonDdlObject<Property> {
 /**
 	 * This comment will be stored in this property.
@@ -11,25 +11,29 @@ java.lang.String getComment();
 java.lang.String getName();
 Type getType();
 public static class Builder implements org.jsonddl.JsonDdlObject.Builder<Property>, Property {
-private Property.Impl obj;
-public Builder() {this(new Property.Impl());}
-public Builder(Property.Impl instance) {this.obj = instance;}
+private PropertyImpl obj;
+public Builder() {this(new PropertyImpl());}
+Builder(PropertyImpl instance) {this.obj = instance;}
 public Property.Builder builder() { return this; }
 public Class<Property> getDdlObjectType() { return Property.class;}
 public Property.Builder newInstance() { return new Property.Builder(); }
 public java.util.Map<String, Object> toJsonObject() { return obj.toJsonObject(); }
 public java.lang.String getComment() { return obj.comment; }
-public Property.Builder withComment(java.lang.String value) { obj.comment = value;return this;}
+public void setComment(java.lang.String value) { withComment(value);}public Property.Builder withComment(java.lang.String value) { obj.comment = value;return this;}
 public java.lang.String getName() { return obj.name; }
-public Property.Builder withName(java.lang.String value) { obj.name = value;return this;}
-public Type getType() { return obj.type; }
-public Property.Builder withType(Type value) { obj.type = value;return this;}
+public void setName(java.lang.String value) { withName(value);}public Property.Builder withName(java.lang.String value) { obj.name = value;return this;}
+public Type.Builder getType() {
+Type.Builder toReturn = obj.type.builder();
+obj.type = toReturn;
+return toReturn;
+}
+public void setType(Type value) { withType(value);}public Property.Builder withType(Type value) { obj.type = value;return this;}
 public Property.Builder accept(org.jsonddl.JsonDdlVisitor visitor) {
 obj = new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Property>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).withMutability(true).build().traverse(visitor).builder().obj;
 return this;
 }
 public Property build() {
-Property.Impl toReturn = obj;
+PropertyImpl toReturn = obj;
 obj = null;
 toReturn.type = org.jsonddl.impl.Protected.object(toReturn.type);
 return toReturn;
@@ -68,46 +72,6 @@ new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Type>()
 .withProperty("type")
 .withValue(obj.type)
 .build().traverse(visitor));
-return this;
-}
-}
-public static class Impl implements Property {
-protected Impl() {}
-public Class<Property> getDdlObjectType() { return Property.class;}
-private java.lang.String comment;
-public java.lang.String getComment() {return comment;}
-private java.lang.String name;
-public java.lang.String getName() {return name;}
-private Type type;
-public Type getType() {return type;}
-public Property accept(org.jsonddl.JsonDdlVisitor visitor) {
-return new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Property>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).build().traverse(visitor);
-}
-public Property.Builder builder() { return newInstance().from(this); }
-public Property.Builder newInstance() { return new Builder(); }
-public java.util.Map<String,Object> toJsonObject() { return org.jsonddl.JsonMapVisitor.toJsonObject(this); }
-public Property traverse(org.jsonddl.JsonDdlVisitor visitor) {
-new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
-.withKind(org.jsonddl.model.Kind.STRING)
-.withLeafType(java.lang.String.class)
-.withMutability(false)
-.withProperty("comment")
-.withValue(this.comment)
-.build().traverse(visitor);
-new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
-.withKind(org.jsonddl.model.Kind.STRING)
-.withLeafType(java.lang.String.class)
-.withMutability(false)
-.withProperty("name")
-.withValue(this.name)
-.build().traverse(visitor);
-new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Type>()
-.withKind(org.jsonddl.model.Kind.DDL)
-.withLeafType(Type.class)
-.withMutability(false)
-.withProperty("type")
-.withValue(this.type)
-.build().traverse(visitor);
 return this;
 }
 }
