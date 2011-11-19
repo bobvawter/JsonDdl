@@ -27,7 +27,12 @@ public class VisitSupport {
   private static Method findMethod(Class<?> visitor, String name, Class<?> searchFor) {
     while (searchFor != null) {
       try {
-        Method m = visitor.getMethod(name, searchFor, Context.class);
+        Method m;
+        try {
+          m = visitor.getMethod(name, searchFor, Context.class);
+        } catch (NoSuchMethodException e) {
+          m = visitor.getMethod(name, searchFor);
+        }
         m.setAccessible(true);
         return m;
       } catch (SecurityException e) {
@@ -50,7 +55,14 @@ public class VisitSupport {
       if (m == null) {
         return null;
       }
-      return m.invoke(visitor, obj, ctx);
+      switch (m.getParameterTypes().length) {
+        case 1:
+          return m.invoke(visitor, obj);
+        case 2:
+          return m.invoke(visitor, obj, ctx);
+        default:
+          throw new RuntimeException("Should not have found method " + m.getName());
+      }
     } catch (IllegalAccessException e) {
       ex = e;
     } catch (InvocationTargetException e) {

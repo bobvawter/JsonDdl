@@ -1,2 +1,3 @@
+org.jsonddl.generator.idiomatic.IdiomaticDialect
 org.jsonddl.generator.industrial.IndustrialDialect
 org.jsonddl.generator.normalized.NormalizedDialect
