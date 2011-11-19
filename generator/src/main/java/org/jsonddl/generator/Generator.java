@@ -37,9 +37,10 @@ import javax.annotation.Generated;
 
 import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
-import org.jsonddl.JsonMapVisitor;
 import org.jsonddl.impl.ContextImpl;
+import org.jsonddl.impl.JsonMapVisitor;
 import org.jsonddl.impl.Protected;
+import org.jsonddl.impl.Traversable;
 import org.jsonddl.model.EnumValue;
 import org.jsonddl.model.Kind;
 import org.jsonddl.model.Model;
@@ -257,8 +258,9 @@ public class Generator {
       PrintWriter builder = new PrintWriter(builderContents);
       {
         builder.println("public static class Builder implements "
-          + JsonDdlObject.Builder.class.getCanonicalName() + "<" + simpleName + ">, " + simpleName
-          + " {");
+          + JsonDdlObject.Builder.class.getCanonicalName() + "<" + simpleName + ">, "
+          + Traversable.class.getCanonicalName() + "<" + simpleName + ">, "
+          + simpleName + " {");
         builder.println("private " + implName + " obj;");
         builder.println("public Builder() {this(new " + implName + "());}");
         builder.println("Builder(" + implName + " instance) {this.obj = instance;}");
@@ -276,7 +278,8 @@ public class Generator {
       {
         impl.println("package " + packageName + ";");
         impl.println(generated);
-        impl.println("class " + implName + " implements " + simpleName + " {");
+        impl.println("class " + implName + " implements "
+          + Traversable.class.getCanonicalName() + "<" + simpleName + ">, " + simpleName + " {");
         impl.println("protected " + implName + "() {}");
         impl.println("public Class<" + simpleName + "> getDdlObjectType() { return "
           + simpleName + ".class;}");
@@ -383,7 +386,7 @@ public class Generator {
       impl.println("}");
 
       impl.println("public " + builderName + " builder() { return newInstance().from(this); }");
-      impl.println("public " + builderName + " newInstance() { return new Builder(); }");
+      impl.println("public " + builderName + " newInstance() { return new " + builderName + "(); }");
 
       impl.println("public " + Map.class.getCanonicalName()
         + "<String,Object> toJsonObject() { return " + JsonMapVisitor.class.getCanonicalName()

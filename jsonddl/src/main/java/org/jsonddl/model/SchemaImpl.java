@@ -1,6 +1,6 @@
 package org.jsonddl.model;
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T21:33:15")
-class SchemaImpl implements Schema {
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-18T23:32:13")
+class SchemaImpl implements org.jsonddl.impl.Traversable<Schema>, Schema {
 protected SchemaImpl() {}
 public Class<Schema> getDdlObjectType() { return Schema.class;}
 java.util.Map<java.lang.String,Model> models;
@@ -9,8 +9,8 @@ public Schema accept(org.jsonddl.JsonDdlVisitor visitor) {
 return new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Schema>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).build().traverse(visitor);
 }
 public Schema.Builder builder() { return newInstance().from(this); }
-public Schema.Builder newInstance() { return new Builder(); }
-public java.util.Map<String,Object> toJsonObject() { return org.jsonddl.JsonMapVisitor.toJsonObject(this); }
+public Schema.Builder newInstance() { return new Schema.Builder(); }
+public java.util.Map<String,Object> toJsonObject() { return org.jsonddl.impl.JsonMapVisitor.toJsonObject(this); }
 public Schema traverse(org.jsonddl.JsonDdlVisitor visitor) {
 new org.jsonddl.impl.ContextImpl.MapContext.Builder<Model>()
 .withKind(org.jsonddl.model.Kind.MAP)

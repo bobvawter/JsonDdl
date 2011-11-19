@@ -13,12 +13,12 @@ import org.jsonddl.JsonDdlVisitor.Context;
  */
 public class VisitSupport {
 
-  public static <J extends JsonDdlObject> void endVisit(JsonDdlVisitor visitor, J obj,
+  public static <J extends JsonDdlObject<J>> void endVisit(JsonDdlVisitor visitor, J obj,
       Context<J> ctx) {
     invoke(visitor, obj, ctx, "endVisit");
   }
 
-  public static <J extends JsonDdlObject> boolean visit(JsonDdlVisitor visitor, J obj,
+  public static <J extends JsonDdlObject<J>> boolean visit(JsonDdlVisitor visitor, J obj,
       Context<J> ctx) {
     Object o = invoke(visitor, obj, ctx, "visit");
     return !Boolean.FALSE.equals(o);
@@ -42,7 +42,7 @@ public class VisitSupport {
     return null;
   }
 
-  private static <J extends JsonDdlObject> Object invoke(JsonDdlVisitor visitor, J obj,
+  private static <J extends JsonDdlObject<J>> Object invoke(JsonDdlVisitor visitor, J obj,
       Context<J> ctx, String name) {
     Throwable ex;
     try {

@@ -28,7 +28,7 @@ import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
 import org.jsonddl.model.Kind;
 
 public abstract class ContextImpl<J> implements Context<J> {
-  public static class Builder<C extends ContextImpl<?> & Traversable<V>, V> {
+  public static class Builder<C extends PropertyContext<?, V>, V> {
     protected C ctx;
 
     Builder(C ctx) {
@@ -235,8 +235,10 @@ public abstract class ContextImpl<J> implements Context<J> {
   /**
    * Allows the traversal of a single {@link JsonDdlObject}.
    */
-  public static class ObjectContext<J extends JsonDdlObject<J>> extends ValueContext<J> {
-    public static class Builder<J extends JsonDdlObject<J>> extends ValueContext.Builder<J> {
+  public static class ObjectContext<J extends JsonDdlObject<J>> extends
+      ValueContext<J> {
+    public static class Builder<J extends JsonDdlObject<J>> extends
+        ValueContext.Builder<J> {
       public Builder() {
         super(new ObjectContext<J>());
       }
@@ -248,12 +250,13 @@ public abstract class ContextImpl<J> implements Context<J> {
     protected void doTraverse(JsonDdlVisitor visitor) {
       if (VisitSupport.visit(visitor, value, this)) {
         if (isMutable()) {
-          J temp = value.builder().traverse(visitor);
+          @SuppressWarnings("unchecked")
+          J temp = ((Traversable<J>) value.builder()).traverse(visitor);
           if (!didChange) {
             value = temp;
           }
         } else {
-          value.traverse(visitor);
+          ((Traversable<J>) value).traverse(visitor);
         }
       }
       VisitSupport.endVisit(visitor, value, this);
@@ -305,15 +308,16 @@ public abstract class ContextImpl<J> implements Context<J> {
    * Allows the traversal of a single property. This method will dispatch to the optional
    * {@link PropertyVisitor} interface methods.
    */
-  static abstract class PropertyContext<J, T> extends ContextImpl<J> implements Traversable<T> {
+  static abstract class PropertyContext<J, T> extends ContextImpl<J> {
     protected T value;
 
-    @Override
     public void setValue(T value) {
       this.value = value;
     }
 
-    @Override
+    /**
+     * Returns the value of the context after traversal is complete.
+     */
     public final T traverse(JsonDdlVisitor visitor) {
       // Avoid treating a root object as though it were embedded in a property
       if (property != null && visitor instanceof PropertyVisitor) {
@@ -340,15 +344,6 @@ public abstract class ContextImpl<J> implements Context<J> {
 
     protected abstract void doTraverse(JsonDdlVisitor visitor);
 
-  }
-
-  interface Traversable<T> {
-    void setValue(T value);
-
-    /**
-     * Returns the value of the context after traversal is complete.
-     */
-    T traverse(JsonDdlVisitor visitor);
   }
 
   Kind kind;

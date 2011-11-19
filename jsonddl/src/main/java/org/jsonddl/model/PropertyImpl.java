@@ -1,6 +1,6 @@
 package org.jsonddl.model;
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T21:33:15")
-class PropertyImpl implements Property {
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-18T23:32:13")
+class PropertyImpl implements org.jsonddl.impl.Traversable<Property>, Property {
 protected PropertyImpl() {}
 public Class<Property> getDdlObjectType() { return Property.class;}
 java.lang.String comment;
@@ -13,8 +13,8 @@ public Property accept(org.jsonddl.JsonDdlVisitor visitor) {
 return new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Property>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).build().traverse(visitor);
 }
 public Property.Builder builder() { return newInstance().from(this); }
-public Property.Builder newInstance() { return new Builder(); }
-public java.util.Map<String,Object> toJsonObject() { return org.jsonddl.JsonMapVisitor.toJsonObject(this); }
+public Property.Builder newInstance() { return new Property.Builder(); }
+public java.util.Map<String,Object> toJsonObject() { return org.jsonddl.impl.JsonMapVisitor.toJsonObject(this); }
 public Property traverse(org.jsonddl.JsonDdlVisitor visitor) {
 new org.jsonddl.impl.ContextImpl.ValueContext.Builder<java.lang.String>()
 .withKind(org.jsonddl.model.Kind.STRING)

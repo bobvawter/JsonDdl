@@ -3,13 +3,13 @@ package org.jsonddl.model;
      * A Schema is the top-level object that encapsulates the normalized form of
      * a json-ddl schema.
      */
-@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-16T21:33:15")
+@javax.annotation.Generated(value="org.jsonddl.generator.Generator", date="2011-11-18T23:32:13")
 public interface Schema extends org.jsonddl.JsonDdlObject<Schema> {
 /**
 	 * A map of object models by simple name.
 	 */
 java.util.Map<java.lang.String,Model> getModels();
-public static class Builder implements org.jsonddl.JsonDdlObject.Builder<Schema>, Schema {
+public static class Builder implements org.jsonddl.JsonDdlObject.Builder<Schema>, org.jsonddl.impl.Traversable<Schema>, Schema {
 private SchemaImpl obj;
 public Builder() {this(new SchemaImpl());}
 Builder(SchemaImpl instance) {this.obj = instance;}
@@ -18,7 +18,8 @@ public Class<Schema> getDdlObjectType() { return Schema.class;}
 public Schema.Builder newInstance() { return new Schema.Builder(); }
 public java.util.Map<String, Object> toJsonObject() { return obj.toJsonObject(); }
 public java.util.Map<java.lang.String,Model> getModels() { return obj.models; }
-public void setModels(java.util.Map<java.lang.String,Model> value) { withModels(value);}public Schema.Builder withModels(java.util.Map<java.lang.String,Model> value) { obj.models = value;return this;}
+public void setModels(java.util.Map<java.lang.String,Model> value) { withModels(value);}
+public Schema.Builder withModels(java.util.Map<java.lang.String,Model> value) { obj.models = value;return this;}
 public Schema.Builder accept(org.jsonddl.JsonDdlVisitor visitor) {
 obj = new org.jsonddl.impl.ContextImpl.ObjectContext.Builder<Schema>().withValue(this).withKind(org.jsonddl.model.Kind.DDL).withMutability(true).build().traverse(visitor).builder().obj;
 return this;
@@ -33,7 +34,7 @@ public Schema.Builder from(Schema from) {
 withModels(from.getModels());
 return this;}
 public Schema.Builder from(java.util.Map<String, Object> map){
-accept(org.jsonddl.JsonMapVisitor.fromJsonMap(map));
+accept(org.jsonddl.impl.JsonMapVisitor.fromJsonMap(map));
 return this;
 }
 public Schema.Builder traverse(org.jsonddl.JsonDdlVisitor visitor) {

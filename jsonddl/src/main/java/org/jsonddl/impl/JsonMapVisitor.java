@@ -1,14 +1,19 @@
-package org.jsonddl;
+package org.jsonddl.impl;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jsonddl.JsonDdlObject;
+import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
-import org.jsonddl.impl.Protected;
 import org.jsonddl.model.Kind;
 
+/**
+ * Internal class used to construct the return type of {@link JsonDdlObject#toJsonObject()} and
+ * interpret values passed into {@link JsonDdlObject.Builder#from(Map)}.
+ */
 public class JsonMapVisitor {
   public static class Builder {
     JsonMapVisitor v = new JsonMapVisitor();
@@ -50,7 +55,7 @@ public class JsonMapVisitor {
 
   class JsonDdlMapper implements Mapper {
     @Override
-    public JsonDdlObject fromJson(Object value, Class<?> leafType) {
+    public JsonDdlObject<?> fromJson(Object value, Class<?> leafType) {
       assert JsonDdlObject.class.isAssignableFrom(leafType);
 
       JsonDdlObject.Builder<?> builder = null;
@@ -76,7 +81,7 @@ public class JsonMapVisitor {
 
     @Override
     public Map<String, Object> toJsonObject(Object o) {
-      return JsonMapVisitor.toJsonObject((JsonDdlObject) o);
+      return JsonMapVisitor.toJsonObject((JsonDdlObject<?>) o);
     }
   }
 
@@ -225,7 +230,7 @@ public class JsonMapVisitor {
     return new JsonMapVisitor().new FromMapVisitor(map);
   }
 
-  public static Map<String, Object> toJsonObject(JsonDdlObject obj) {
+  public static Map<String, Object> toJsonObject(JsonDdlObject<?> obj) {
     JsonMapVisitor.ToMapVisitor v = new JsonMapVisitor().new ToMapVisitor();
     obj.accept(v);
     return v.getMap();
