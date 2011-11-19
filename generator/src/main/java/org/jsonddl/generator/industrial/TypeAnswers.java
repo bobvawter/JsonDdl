@@ -1,4 +1,4 @@
-package org.jsonddl.generator;
+package org.jsonddl.generator.industrial;
 
 import java.util.EnumMap;
 import java.util.List;

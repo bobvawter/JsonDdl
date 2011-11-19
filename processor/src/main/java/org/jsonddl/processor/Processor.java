@@ -17,8 +17,8 @@ import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
 
+import org.jsonddl.generator.Dialect;
 import org.jsonddl.generator.Generator;
-import org.jsonddl.generator.Generator.Collector;
 
 @SupportedAnnotationTypes("org.jsonddl.processor.GenerateFrom")
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
@@ -34,7 +34,7 @@ public class Processor extends AbstractProcessor {
           FileObject obj = processingEnv.getFiler().getResource(StandardLocation.SOURCE_PATH,
               packageName, fileName);
 
-          new Generator().generate(obj.openInputStream(), packageName, new Collector() {
+          new Generator().generate(obj.openInputStream(), packageName, new Dialect.Collector() {
 
             @Override
             public void println(String message) {
@@ -47,10 +47,17 @@ public class Processor extends AbstractProcessor {
             }
 
             @Override
-            public OutputStream writeImplementation(String packageName, String simpleName)
+            public OutputStream writeJavaSource(String packageName, String simpleName)
                 throws IOException {
               JavaFileObject obj = processingEnv.getFiler().createSourceFile(
                   packageName + "." + simpleName);
+              return obj.openOutputStream();
+            }
+
+            @Override
+            public OutputStream writeResource(String path) throws IOException {
+              FileObject obj = processingEnv.getFiler().createResource(
+                  StandardLocation.CLASS_OUTPUT, "", path);
               return obj.openOutputStream();
             }
           });

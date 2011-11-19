@@ -11,8 +11,8 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
+import org.jsonddl.generator.Dialect;
 import org.jsonddl.generator.Generator;
-import org.jsonddl.generator.Generator.Collector;
 
 /**
  * Runs the JsonDdl code generator.
@@ -69,7 +69,7 @@ public class JsonDdlMojo extends AbstractMojo {
     for (File schema : schemas) {
       try {
         boolean success = new Generator().generate(new FileInputStream(schema), packageName,
-            new Collector() {
+            new Dialect.Collector() {
               @Override
               public void println(String message) {
                 getLog().info(message);
@@ -81,13 +81,21 @@ public class JsonDdlMojo extends AbstractMojo {
               }
 
               @Override
-              public OutputStream writeImplementation(String packageName, String simpleName)
+              public OutputStream writeJavaSource(String packageName, String simpleName)
                   throws IOException {
                 File dir = new File(outputDirectory, packageName.replace('.', File.separatorChar));
                 dir.mkdirs();
                 File f = new File(dir, simpleName + ".java");
                 return new FileOutputStream(f);
               }
+
+              @Override
+              public OutputStream writeResource(String path) throws IOException {
+                File file = new File(outputDirectory, path);
+                file.getParentFile().mkdirs();
+                return new FileOutputStream(file);
+              }
+
             });
         if (!success) {
           throw new MojoFailureException("Code generator did not complete normally");
