@@ -129,6 +129,7 @@ public class IdiomaticDialect implements Dialect {
           break;
         case INTEGER:
           out.print("0");
+          break;
         case LIST:
           out.print("[");
           t.getListElement().accept(this);
