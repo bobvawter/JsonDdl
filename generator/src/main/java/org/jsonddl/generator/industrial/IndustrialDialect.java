@@ -31,6 +31,7 @@ import javax.annotation.Generated;
 import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.generator.Dialect;
+import org.jsonddl.generator.Options;
 import org.jsonddl.impl.ContextImpl;
 import org.jsonddl.impl.JsonMapVisitor;
 import org.jsonddl.impl.Protected;
@@ -45,8 +46,9 @@ import org.jsonddl.model.Type;
 public class IndustrialDialect implements Dialect {
 
   @Override
-  public void generate(String packageName, Dialect.Collector output, Schema s) throws IOException {
+  public void generate(Options options, Dialect.Collector output, Schema s) throws IOException {
     Date now = new Date();
+    String packageName = options.getPackageName();
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     for (Model model : s.getModels().values()) {
       String simpleName = model.getName();

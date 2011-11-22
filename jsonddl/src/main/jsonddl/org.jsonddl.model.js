@@ -24,6 +24,10 @@ var schema = {
    */
   Schema : {
     /**
+     * General information about the schema itself.
+     */
+    comment : "",
+    /**
      * A map of object models by simple name.
      */
     models : {
@@ -70,6 +74,9 @@ var schema = {
    * The only map key type that makes sense for json is a String.
    */
   "MAP", "STRING" ],
+  /**
+   * A specific Kind and parameterization thereof.
+   */
   Type : {
     name : "",
     kind : "Kind",

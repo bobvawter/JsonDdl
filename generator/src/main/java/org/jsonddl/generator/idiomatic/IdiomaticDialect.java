@@ -19,6 +19,7 @@ import java.io.StringWriter;
 
 import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.generator.Dialect;
+import org.jsonddl.generator.Options;
 import org.jsonddl.model.EnumValue;
 import org.jsonddl.model.Model;
 import org.jsonddl.model.Property;
@@ -108,7 +109,10 @@ public class IdiomaticDialect implements Dialect {
       return true;
     }
 
-    public boolean visit(Schema s, Context<Schema> ctx) {
+    public boolean visit(Schema s) {
+      if (s.getComment() != null) {
+        out.println(s.getComment());
+      }
       out.print("var schema = {");
       out.indent();
       return true;
@@ -153,11 +157,12 @@ public class IdiomaticDialect implements Dialect {
   }
 
   @Override
-  public void generate(String packageName, Collector output, Schema s) throws IOException {
+  public void generate(Options options, Collector output, Schema s) throws IOException {
     Visitor v = new Visitor();
     s.accept(v);
 
-    OutputStream out = output.writeResource(packageName.replace('.', '/') + "/idiomatic.js");
+    OutputStream out = output.writeResource(options.getPackageName().replace('.', '/')
+      + "/idiomatic.js");
     out.write(v.toString().getBytes("UTF8"));
     out.close();
   }

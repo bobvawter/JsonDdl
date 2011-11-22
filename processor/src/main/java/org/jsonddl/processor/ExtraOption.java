@@ -13,25 +13,8 @@
  */
 package org.jsonddl.processor;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
+public @interface ExtraOption {
+  String key();
 
-@Documented
-@Target(ElementType.PACKAGE)
-public @interface GenerateFrom {
-  /**
-   * Specifies the generator dialects to invoke.
-   */
-  String[] dialects() default { "industrial", "normalized" };
-
-  /**
-   * Allows extra options to be passed to the generator dialects.
-   */
-  ExtraOption[] extraOptions() default {};
-
-  /**
-   * Specifies a package-relative path for the source schema file.
-   */
   String value();
 }

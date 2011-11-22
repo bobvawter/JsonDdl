@@ -47,10 +47,13 @@ import org.mozilla.javascript.ast.ObjectProperty;
 import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.VariableDeclaration;
 
+import com.google.gson.Gson;
+
 public class Generator {
   public static void main(String[] args) throws IOException {
     final File outputRoot = new File(args[2]);
-    new Generator().generate(new FileInputStream(new File(args[0])), args[1],
+    Options options = new Options.Builder().withPackageName(args[1]).build();
+    new Generator().generate(new FileInputStream(new File(args[0])), options,
         new Dialect.Collector() {
           @Override
           public void println(String message) {
@@ -80,7 +83,36 @@ public class Generator {
         });
   }
 
-  public boolean generate(InputStream schema, String packageName, Dialect.Collector output)
+  public boolean generate(InputStream schema, Options options, Dialect.Collector output)
+      throws IOException {
+    Schema s;
+    if (options.getNormalizedInput()) {
+      s = parseNormalized(schema, output);
+    } else {
+      s = parseIdiomatic(options, schema, output);
+    }
+    if (s == null) {
+      return false;
+    }
+    ServiceLoader<Dialect> loader = ServiceLoader.load(Dialect.class);
+    if (!loader.iterator().hasNext()) {
+      /*
+       * Fallback for the case where the generator jar isn't on the actual classpath, but has been
+       * loaded as a plugin. This is normally what happens when running as an annotation processor.
+       */
+      loader = ServiceLoader.load(Dialect.class, getClass().getClassLoader());
+    }
+
+    List<String> dialects = options.getDialects();
+    for (Dialect dialect : loader) {
+      if (dialects == null || dialects.contains(dialect.getName())) {
+        dialect.generate(options, output, s);
+      }
+    }
+    return true;
+  }
+
+  Schema parseIdiomatic(Options options, InputStream schema, Dialect.Collector output)
       throws IOException {
     CompilerEnvirons env = new CompilerEnvirons();
     env.setRecordingComments(true);
@@ -89,22 +121,25 @@ public class Generator {
     AstRoot root;
     try {
       InputStreamReader sourceReader = new InputStreamReader(schema);
-      root = parser.parse(sourceReader, packageName, 0);
+      root = parser.parse(sourceReader, options.getPackageName(), 0);
       sourceReader.close();
     } catch (RhinoException e) {
       output.println("Could not parse input file: %s", e.getMessage());
-      return false;
+      return null;
     }
+    Schema.Builder schemaBuilder = new Schema.Builder();
     Node first = root.getFirstChild();
     if (first instanceof VariableDeclaration) {
-      first = ((VariableDeclaration) first).getVariables().get(0).getInitializer();
+      VariableDeclaration decl = (VariableDeclaration) first;
+      schemaBuilder.setComment(decl.getJsDoc());
+      first = decl.getVariables().get(0).getInitializer();
     }
     ObjectLiteral obj;
     if (first instanceof ObjectLiteral) {
       obj = (ObjectLiteral) first;
     } else {
       output.println("Expecting an object literal or variable initializer as the first node");
-      return false;
+      return null;
     }
 
     Map<String, Model> models = new TreeMap<String, Model>();
@@ -141,19 +176,14 @@ public class Generator {
       }
       models.put(extractName(prop), builder.build());
     }
-    Schema s = new Schema.Builder().withModels(models).accept(new DdlTypeReplacer()).build();
-    ServiceLoader<Dialect> loader = ServiceLoader.load(Dialect.class);
-    if (!loader.iterator().hasNext()) {
-      /*
-       * Fallback for the case where the generator jar isn't on the actual classpath, but has been
-       * loaded as a plugin. This is normally what happens when running as an annotation processor.
-       */
-      loader = ServiceLoader.load(Dialect.class, getClass().getClassLoader());
-    }
-    for (Dialect dialect : loader) {
-      dialect.generate(packageName, output, s);
-    }
-    return true;
+    Schema s = schemaBuilder.withModels(models).accept(new DdlTypeReplacer()).build();
+    return s;
+  }
+
+  Schema parseNormalized(InputStream schema, Dialect.Collector output) throws IOException {
+    @SuppressWarnings("unchecked")
+    Map<String, Object> map = new Gson().fromJson(new InputStreamReader(schema, "UTF8"), Map.class);
+    return new Schema.Builder().from(map).build();
   }
 
   private <T extends AstNode> T castOrNull(Class<T> clazz, AstNode node) {

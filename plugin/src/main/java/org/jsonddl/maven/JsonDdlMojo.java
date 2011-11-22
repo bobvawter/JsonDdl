@@ -19,6 +19,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Map;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -26,6 +28,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.jsonddl.generator.Dialect;
 import org.jsonddl.generator.Generator;
+import org.jsonddl.generator.Options;
 
 /**
  * Runs the JsonDdl code generator.
@@ -34,6 +37,21 @@ import org.jsonddl.generator.Generator;
  * @phase generate-sources
  */
 public class JsonDdlMojo extends AbstractMojo {
+  /**
+   * The names of the generator dialects to invoke. If left unspecified, the "industrial" and
+   * "normalized" dialects will be executed.
+   * 
+   * @parameter
+   */
+  private String[] dialects = { "industrial", "normalized" };
+
+  /**
+   * Extra options to provide to the generator dialects.
+   * 
+   * @parameter
+   */
+  private Map<String, String> extraOptions;
+
   /**
    * Specific schema files to generate. If not specified, any {@code *.js} files in
    * {@code src/[main,test]/jsonddl} will be compiled.
@@ -79,9 +97,14 @@ public class JsonDdlMojo extends AbstractMojo {
       outputDirectory = new File(outputDirectory, "jsonddl");
       project.addCompileSourceRoot(outputDirectory.getAbsolutePath());
     }
+    Options options = new Options.Builder()
+        .withDialects(Arrays.asList(dialects))
+        .withExtraOptions(extraOptions)
+        .withPackageName(packageName)
+        .build();
     for (File schema : schemas) {
       try {
-        boolean success = new Generator().generate(new FileInputStream(schema), packageName,
+        boolean success = new Generator().generate(new FileInputStream(schema), options,
             new Dialect.Collector() {
               @Override
               public void println(String message) {

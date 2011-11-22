@@ -59,7 +59,7 @@ public interface Dialect {
     OutputStream writeResource(String path) throws IOException;
   }
 
-  void generate(String packageName, Dialect.Collector output, Schema s) throws IOException;
+  void generate(Options options, Dialect.Collector output, Schema s) throws IOException;
 
   String getName();
 }
