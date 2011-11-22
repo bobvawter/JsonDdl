@@ -143,6 +143,13 @@ public class Generator {
     }
     Schema s = new Schema.Builder().withModels(models).accept(new DdlTypeReplacer()).build();
     ServiceLoader<Dialect> loader = ServiceLoader.load(Dialect.class);
+    if (!loader.iterator().hasNext()) {
+      /*
+       * Fallback for the case where the generator jar isn't on the actual classpath, but has been
+       * loaded as a plugin. This is normally what happens when running as an annotation processor.
+       */
+      loader = ServiceLoader.load(Dialect.class, getClass().getClassLoader());
+    }
     for (Dialect dialect : loader) {
       dialect.generate(packageName, output, s);
     }
