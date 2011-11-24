@@ -19,6 +19,7 @@ import java.io.StringWriter;
 
 import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.generator.Dialect;
+import org.jsonddl.generator.IndentedWriter;
 import org.jsonddl.generator.Options;
 import org.jsonddl.model.EnumValue;
 import org.jsonddl.model.Model;

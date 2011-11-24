@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.jsonddl.generator.idiomatic;
+package org.jsonddl.generator;
 
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -20,7 +20,7 @@ import java.io.Writer;
  * Convenience writer.
  */
 public class IndentedWriter extends PrintWriter {
-  private boolean shouldIndent;
+  private boolean shouldIndent = true;
   private int level;
 
   public IndentedWriter(Writer sink) {
