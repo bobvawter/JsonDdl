@@ -11,21 +11,6 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.jsonddl.test;
+@org.jsonddl.processor.GenerateFrom(value = "example.js", dialects = "pojo")
+package org.jsonddl.test.pojo;
 
-import org.junit.Test;
-
-/**
- * This just ensures that the maven processor runs at the right time.
- */
-public class JsonDdlTest {
-  @Test
-  public void test() {
-    new org.jsonddl.test.industrial.Example.Builder().build();
-  }
-
-  @Test
-  public void testPojo() {
-    new org.jsonddl.test.pojo.Example();
-  }
-}

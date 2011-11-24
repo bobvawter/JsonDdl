@@ -44,6 +44,10 @@ public class IndentedWriter extends PrintWriter {
     level--;
   }
 
+  public void print(String format, Object... args) {
+    format(format, args);
+  }
+
   @Override
   public void println() {
     super.println();

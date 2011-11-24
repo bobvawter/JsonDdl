@@ -26,4 +26,11 @@ public class JsonDdlTest {
     Builder<?> b = Builder.class.cast(clazz.newInstance());
     b.build();
   }
+
+  @Test
+  public void testPojo() throws ClassNotFoundException, InstantiationException,
+      IllegalAccessException {
+    Class<?> clazz = Class.forName("org.jsonddl.test.pojo.Example");
+    clazz.newInstance();
+  }
 }

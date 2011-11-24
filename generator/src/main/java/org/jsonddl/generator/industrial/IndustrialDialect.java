@@ -45,11 +45,23 @@ import org.jsonddl.model.Type;
 
 public class IndustrialDialect implements Dialect {
 
+  public static String generatedAnnotation(Class<? extends Dialect> clazz, Date now) {
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    String generated = "@" + Generated.class.getCanonicalName() + "(value=\""
+      + clazz.getCanonicalName() + "\", date=\"" + sdf.format(now) + "\")";
+    return generated;
+  }
+
+  public static String getterName(String propName) {
+    String getterName = Character.toUpperCase(propName.charAt(0))
+      + (propName.length() > 1 ? propName.substring(1) : "");
+    return getterName;
+  }
+
   @Override
   public void generate(Options options, Dialect.Collector output, Schema s) throws IOException {
     Date now = new Date();
     String packageName = options.getPackageName();
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     for (Model model : s.getModels().values()) {
       String simpleName = model.getName();
       String builderName = simpleName + ".Builder";
@@ -62,9 +74,7 @@ public class IndustrialDialect implements Dialect {
       if (model.getComment() != null) {
         intf.println(model.getComment());
       }
-      String generated = "@" + Generated.class.getCanonicalName() + "(value=\""
-        + getClass().getCanonicalName() + "\", date=\"" + sdf.format(now) + "\")";
-      intf.println(generated);
+      intf.println(generatedAnnotation(getClass(), now));
 
       if (model.getEnumValues() != null) {
         intf.println("public enum " + simpleName + " {");
@@ -113,7 +123,7 @@ public class IndustrialDialect implements Dialect {
           packageName, implName)));
       {
         impl.println("package " + packageName + ";");
-        impl.println(generated);
+        impl.println(generatedAnnotation(getClass(), now));
         impl.println("class " + implName + " implements "
           + Traversable.class.getCanonicalName() + "<" + simpleName + ">, " + simpleName + " {");
         impl.println("protected " + implName + "() {}");
@@ -131,8 +141,7 @@ public class IndustrialDialect implements Dialect {
       for (Property property : model.getProperties()) {
         String propName = property.getName();
         Type type = property.getType();
-        String getterName = Character.toUpperCase(propName.charAt(0))
-          + (propName.length() > 1 ? propName.substring(1) : "");
+        String getterName = getterName(propName);
 
         String qsn = getParameterizedQualifiedSourceName(type);
         impl.println(qsn + " " + propName + ";");
