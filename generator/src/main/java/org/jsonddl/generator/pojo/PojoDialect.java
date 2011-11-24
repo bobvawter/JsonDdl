@@ -31,14 +31,20 @@ import org.jsonddl.model.Property;
 import org.jsonddl.model.Schema;
 import org.jsonddl.model.Type;
 
+/**
+ * Creates plain-old Java objects.
+ */
 public class PojoDialect implements Dialect {
-
-  static class Visitor implements JsonDdlVisitor {
-    private final Date now = new Date();
-    private final Options options;
-    private IndentedWriter out;
-    private final Collector output;
-    private final String packageName;
+  /**
+   * Performs the actual code-generation. Decoration of the generated code with additional
+   * annotations can be accomplished by overriding any of the {@code beforeX} methods.
+   */
+  protected static class Visitor implements JsonDdlVisitor {
+    protected final Date now = new Date();
+    protected final Options options;
+    protected IndentedWriter out;
+    protected final Collector output;
+    protected final String packageName;
 
     public Visitor(Options options, Collector output) {
       this.options = options;
@@ -59,6 +65,7 @@ public class PojoDialect implements Dialect {
       if (m.getComment() != null) {
         out.println(m.getComment());
       }
+      beforeModel(m);
       out.println(generatedAnnotation(PojoDialect.class, now));
       out.println("public class %s {", m.getName());
       out.indent();
@@ -68,6 +75,7 @@ public class PojoDialect implements Dialect {
     public boolean visit(Property p) {
       String getterName = getterName(p.getName());
       // Field
+      beforeField(p);
       out.print("private ");
       p.getType().accept(this);
       out.println(" %s;", getterName);
@@ -76,11 +84,13 @@ public class PojoDialect implements Dialect {
       if (p.getComment() != null) {
         out.println(p.getComment());
       }
+      beforeGetter(p);
       out.print("public ");
       p.getType().accept(this);
       out.println(" get%s() { return this.%s; }", getterName, getterName);
 
       // Setter
+      beforeSetter(p);
       out.print("public void set%s(", getterName);
       p.getType().accept(this);
       out.println(" value) { this.%s = value; }", getterName);
@@ -123,15 +133,42 @@ public class PojoDialect implements Dialect {
       }
       return false;
     }
+
+    /**
+     * Called before a field declaration is written.
+     */
+    protected void beforeField(Property p) {}
+
+    /**
+     * Called before a getter declaration is written.
+     */
+    protected void beforeGetter(Property p) {}
+
+    /**
+     * Called before a type declaration is written.
+     */
+    protected void beforeModel(Model m) {}
+
+    /**
+     * Called before a setter decleration is written.
+     */
+    protected void beforeSetter(Property p) {}
   }
 
   @Override
   public void generate(Options options, Collector output, Schema s) throws IOException {
-    s.accept(new Visitor(options, output));
+    s.accept(createVisitor(options, output));
   }
 
   @Override
   public String getName() {
     return "pojo";
+  }
+
+  /**
+   * Subclasses can override this method to provide an alternate
+   */
+  protected Visitor createVisitor(Options options, Collector output) {
+    return new Visitor(options, output);
   }
 }

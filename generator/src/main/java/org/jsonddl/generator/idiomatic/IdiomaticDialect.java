@@ -87,7 +87,7 @@ public class IdiomaticDialect implements Dialect {
         out.println(m.getComment());
       }
       if (m.getEnumValues() != null) {
-        out.println("%s : [", m.getName());
+        out.format("%s : [", m.getName());
         out.indent();
       } else {
         out.format("%s : {", m.getName());

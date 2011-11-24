@@ -16,7 +16,7 @@ package org.jsonddl.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +27,7 @@ public class Protected {
   private static final Class<?> unmodifiableMapClass;
   static {
     unmodifiableListClass = Collections.unmodifiableList(Arrays.asList(1, 2, 3)).getClass();
-    Map<Object, Object> testMap = new HashMap<Object, Object>();
+    Map<Object, Object> testMap = new LinkedHashMap<Object, Object>();
     testMap.put(new Object(), new Object());
     testMap.put(new Object(), new Object());
     unmodifiableMapClass = Collections.unmodifiableMap(testMap).getClass();
@@ -76,7 +76,7 @@ public class Protected {
         if (unmodifiableMapClass.equals(values.getClass())) {
           return values;
         }
-        Map<K, V> toReturn = new HashMap<K, V>();
+        Map<K, V> toReturn = new LinkedHashMap<K, V>();
         for (Map.Entry<K, V> entry : values.entrySet()) {
           toReturn.put(object(entry.getKey()), object(entry.getValue()));
         }
