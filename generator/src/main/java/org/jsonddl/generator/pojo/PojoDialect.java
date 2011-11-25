@@ -26,6 +26,7 @@ import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.generator.Dialect;
 import org.jsonddl.generator.IndentedWriter;
 import org.jsonddl.generator.Options;
+import org.jsonddl.model.Kind;
 import org.jsonddl.model.Model;
 import org.jsonddl.model.Property;
 import org.jsonddl.model.Schema;
@@ -87,7 +88,8 @@ public class PojoDialect implements Dialect {
       beforeGetter(p);
       out.print("public ");
       p.getType().accept(this);
-      out.println(" get%s() { return this.%s; }", getterName, getterName);
+      out.println(" %s%s() { return this.%s; }",
+          Kind.BOOLEAN.equals(p.getType().getKind()) ? "is" : "get", getterName, getterName);
 
       // Setter
       beforeSetter(p);
