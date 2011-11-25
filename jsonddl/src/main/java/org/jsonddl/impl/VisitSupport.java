@@ -51,8 +51,11 @@ public class VisitSupport {
       } catch (SecurityException e) {
         throw new RuntimeException(e);
       } catch (NoSuchMethodException e) {
+        if (JsonDdlObject.class.equals(searchFor)) {
+          break;
+        }
         searchFor = searchFor.getSuperclass();
-        if (Object.class.equals(searchFor)) {
+        if (searchFor == null) {
           searchFor = JsonDdlObject.class;
         }
       }
