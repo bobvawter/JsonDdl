@@ -1,1 +1,1 @@
-../example.js
+../../../../../../../../etc/example.js

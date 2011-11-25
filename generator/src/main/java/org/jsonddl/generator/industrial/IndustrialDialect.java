@@ -52,10 +52,10 @@ public class IndustrialDialect implements Dialect {
     return generated;
   }
 
-  public static String getterName(String propName) {
-    String getterName = Character.toUpperCase(propName.charAt(0))
-      + (propName.length() > 1 ? propName.substring(1) : "");
-    return getterName;
+  public static String getterName(String getterName) {
+    String propName = Character.toUpperCase(getterName.charAt(0))
+      + (getterName.length() > 1 ? getterName.substring(1) : "");
+    return propName;
   }
 
   @Override
@@ -139,14 +139,13 @@ public class IndustrialDialect implements Dialect {
       StringWriter traverseMutableContents = new StringWriter();
       PrintWriter traverseMutable = new PrintWriter(traverseMutableContents);
       for (Property property : model.getProperties()) {
-        String propName = property.getName();
         Type type = property.getType();
-        String getterName = getterName(propName);
+        String getterName = getterName(property.getName());
 
         String qsn = getParameterizedQualifiedSourceName(type);
-        impl.println(qsn + " " + propName + ";");
+        impl.println(qsn + " " + getterName + ";");
         impl.println("public " + qsn + " get" + getterName + "() {return "
-            + propName + ";}");
+            + getterName + ";}");
 
         if (property.getComment() != null) {
           intf.println(property.getComment());
@@ -154,33 +153,33 @@ public class IndustrialDialect implements Dialect {
         intf.println(qsn + " get" + getterName + "();");
 
         if (TypeAnswers.shouldProtect(type)) {
-          build.println("toReturn." + propName + " = " + Protected.class.getCanonicalName()
-            + ".object(toReturn." + propName + ");");
+          build.println("toReturn." + getterName + " = " + Protected.class.getCanonicalName()
+            + ".object(toReturn." + getterName + ");");
         }
 
         if (Kind.DDL.equals(type.getKind())) {
           // public Foo.Builder getFoo() { Foo.Builder toReturn = obj.foo.builder();
           builder.println("public " + qsn + ".Builder"
             + " get" + getterName + "() {");
-          builder.println(qsn + ".Builder toReturn = obj." + propName + ".builder();");
-          builder.println("obj." + propName + " = toReturn;");
+          builder.println(qsn + ".Builder toReturn = obj." + getterName + ".builder();");
+          builder.println("obj." + getterName + " = toReturn;");
           builder.println("return toReturn;");
           builder.println("}");
         } else {
-          builder.println("public " + qsn + " get" + getterName + "() { return obj." + propName
+          builder.println("public " + qsn + " get" + getterName + "() { return obj." + getterName
             + "; }");
         }
         builder.println("public void set" + getterName + "(" + qsn + " value) { with" + getterName
           + "(value);}");
         builder.print(
             "public " + builderName + " with" + getterName + "(" + qsn + " value) { ");
-        builder.print("obj." + propName + " = value;");
+        builder.print("obj." + getterName + " = value;");
         builder.println("return this;}");
 
         from.println("with" + getterName + "(from.get" + getterName + "());");
 
-        writeTraversalForProperty(traverse, propName, getterName, type, false);
-        writeTraversalForProperty(traverseMutable, propName, getterName, type, true);
+        writeTraversalForProperty(traverse, getterName, getterName, type, false);
+        writeTraversalForProperty(traverseMutable, getterName, getterName, type, true);
       }
       builder.println("public " + builderName + " accept("
         + JsonDdlVisitor.class.getCanonicalName()
