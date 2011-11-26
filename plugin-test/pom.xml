@@ -27,7 +27,7 @@
           <execution>
             <id>industrial</id>
             <configuration>
-              <packageName>org.jsonddl.test.industrial</packageName>
+              <!-- Use implicit package naming -->
               <dialects>
                 <dialect>idiomatic</dialect>
                 <dialect>industrial</dialect>
@@ -41,7 +41,10 @@
           <execution>
             <id>pojo</id>
             <configuration>
-              <packageName>org.jsonddl.test.pojo</packageName>
+              <!-- Rename inferred schema package -->
+              <schemas>
+                <org.jsonddl.test.pojo>src/test/jsonddl/org.jsonddl.test.industrial.js</org.jsonddl.test.pojo>
+              </schemas>
               <dialects>
                 <dialect>pojo</dialect>
               </dialects>

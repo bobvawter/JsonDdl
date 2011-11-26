@@ -20,6 +20,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.maven.plugin.AbstractMojo;
@@ -53,12 +54,14 @@ public class JsonDdlMojo extends AbstractMojo {
   private Map<String, String> extraOptions;
 
   /**
-   * Specific schema files to generate. If not specified, any {@code *.js} files in
-   * {@code src/[main,test]/jsonddl} will be compiled.
+   * Specific schema files to generate. The format is
+   * {@code <com.example.packageName>path/to/scema.js</com.example.packageName>}. If not specified,
+   * any {@code *.js} files in {@code src/[main,test]/jsonddl} will be compiled and the basename of
+   * the file will be treated as the package name.
    * 
    * @parameter
    */
-  private File[] schemas;
+  private Map<String, String> schemas;
 
   /**
    * The destination directory for the generated sources.
@@ -66,14 +69,6 @@ public class JsonDdlMojo extends AbstractMojo {
    * @parameter default-value="${project.build.directory}/generated-sources"
    */
   private File outputDirectory;
-
-  /**
-   * The name of the package into which the generated types should be placed.
-   * 
-   * @parameter
-   * @required
-   */
-  private String packageName;
 
   /**
    * @parameter default-value="${project}"
@@ -85,13 +80,13 @@ public class JsonDdlMojo extends AbstractMojo {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     if (isTest()) {
-      if (schemas == null || schemas.length == 0) {
+      if (schemas == null || schemas.isEmpty()) {
         schemas = findFiles("src/test/jsonddl");
       }
       outputDirectory = new File(outputDirectory, "test-jsonddl");
       project.addTestCompileSourceRoot(outputDirectory.getAbsolutePath());
     } else {
-      if (schemas == null || schemas.length == 0) {
+      if (schemas == null || schemas.isEmpty()) {
         schemas = findFiles("src/main/jsonddl");
       }
       outputDirectory = new File(outputDirectory, "jsonddl");
@@ -100,11 +95,16 @@ public class JsonDdlMojo extends AbstractMojo {
     Options options = new Options.Builder()
         .withDialects(Arrays.asList(dialects))
         .withExtraOptions(extraOptions)
-        .withPackageName(packageName)
         .build();
-    for (File schema : schemas) {
+    for (Map.Entry<String, String> schema : schemas.entrySet()) {
       try {
-        boolean success = new Generator().generate(new FileInputStream(schema), options,
+        File schemaFile = new File(project.getBasedir(), schema.getValue());
+        if (!schemaFile.canRead()) {
+          throw new MojoExecutionException("Cannot find schema file " + schemaFile.getPath());
+        }
+        boolean success = new Generator().generate(
+            new FileInputStream(schemaFile),
+            options.builder().withPackageName(schema.getKey()).build(),
             new Dialect.Collector() {
               @Override
               public void println(String message) {
@@ -146,12 +146,20 @@ public class JsonDdlMojo extends AbstractMojo {
     return false;
   }
 
-  private File[] findFiles(String lookIn) {
-    return new File(project.getBasedir(), lookIn).listFiles(new FileFilter() {
+  private Map<String, String> findFiles(String lookIn) {
+    File[] files = new File(project.getBasedir(), lookIn).listFiles(new FileFilter() {
       @Override
       public boolean accept(File pathname) {
         return pathname.getPath().endsWith(".js");
       }
     });
+    Map<String, String> toReturn = new LinkedHashMap<String, String>();
+    for (File f : files) {
+      String localPackage = f.getName();
+      localPackage = localPackage.substring(0, localPackage.length() - 3);
+      toReturn.put(localPackage, f.getPath().substring(project.getBasedir().getPath().length()));
+      getLog().debug("Mapped file " + f.getPath() + " to package " + localPackage);
+    }
+    return toReturn;
   }
 }
