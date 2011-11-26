@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.jsonddl.generator.industrial;
+package org.jsonddl.generator;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -21,7 +21,7 @@ import org.jsonddl.impl.ContextImpl;
 import org.jsonddl.model.Kind;
 import org.jsonddl.model.Type;
 
-class TypeAnswers {
+public class TypeAnswers {
   private static final Map<Kind, Class<?>> contextTypes = new EnumMap<Kind, Class<?>>(
       Kind.class);
   static {
@@ -119,6 +119,29 @@ class TypeAnswers {
         return Map.class.getCanonicalName();
     }
     throw new UnsupportedOperationException(type.toString());
+  }
+
+  /**
+   * Returns {@code true} if the two types are equivalent.
+   */
+  public static boolean isSameType(Type a, Type b) {
+    if (!a.getKind().equals(b.getKind())) {
+      return false;
+    }
+
+    switch (a.getKind()) {
+      case DDL:
+      case ENUM:
+      case EXTERNAL:
+        return a.getName().equals(b.getName());
+      case LIST:
+        return isSameType(a.getListElement(), b.getListElement());
+      case MAP:
+        return isSameType(a.getMapKey(), b.getMapKey()) &&
+          isSameType(a.getMapValue(), b.getMapValue());
+    }
+
+    return true;
   }
 
   public static boolean shouldProtect(Type type) {

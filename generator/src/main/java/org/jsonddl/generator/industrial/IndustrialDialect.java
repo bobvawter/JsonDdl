@@ -13,7 +13,7 @@
  */
 package org.jsonddl.generator.industrial;
 
-import static org.jsonddl.generator.industrial.TypeAnswers.getParameterizedQualifiedSourceName;
+import static org.jsonddl.generator.TypeAnswers.getParameterizedQualifiedSourceName;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -33,6 +33,7 @@ import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.generator.Dialect;
 import org.jsonddl.generator.IndentedWriter;
 import org.jsonddl.generator.Options;
+import org.jsonddl.generator.TypeAnswers;
 import org.jsonddl.impl.ContextImpl;
 import org.jsonddl.impl.JsonMapVisitor;
 import org.jsonddl.impl.Protected;
@@ -53,10 +54,9 @@ public class IndustrialDialect implements Dialect {
     return generated;
   }
 
-  public static String getterName(String getterName) {
-    String propName = Character.toUpperCase(getterName.charAt(0))
-      + (getterName.length() > 1 ? getterName.substring(1) : "");
-    return propName;
+  public static String getterName(String propertyName) {
+    return Character.toUpperCase(propertyName.charAt(0))
+      + (propertyName.length() > 1 ? propertyName.substring(1) : "");
   }
 
   @Override
