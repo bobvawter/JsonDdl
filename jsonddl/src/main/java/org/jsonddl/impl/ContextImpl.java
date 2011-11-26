@@ -83,8 +83,10 @@ public abstract class ContextImpl<J> implements Context<J> {
       }
     }
 
-    private boolean didReplace;
+    private boolean didRemove;
     private ListIterator<J> it;
+    private List<J> toInsertAfter = new ArrayList<J>();
+    private List<J> toInsertBefore = new ArrayList<J>();
 
     ListContext() {}
 
@@ -99,14 +101,9 @@ public abstract class ContextImpl<J> implements Context<J> {
     }
 
     @Override
-    public boolean canReplace() {
-      return isMutable();
-    }
-
-    @Override
     public void insertAfter(J next) {
       if (isMutable()) {
-        it.add(next);
+        toInsertAfter.add(0, next);
       } else {
         super.insertAfter(next);
       }
@@ -115,9 +112,7 @@ public abstract class ContextImpl<J> implements Context<J> {
     @Override
     public void insertBefore(J previous) {
       if (isMutable()) {
-        int current = it.previousIndex() + 1;
-        value.add(current, previous);
-        it = value.listIterator(current + 1);
+        toInsertBefore.add(previous);
       } else {
         super.insertBefore(previous);
       }
@@ -126,19 +121,9 @@ public abstract class ContextImpl<J> implements Context<J> {
     @Override
     public void remove() {
       if (isMutable()) {
-        it.remove();
+        didRemove = true;
       } else {
         super.remove();
-      }
-    }
-
-    @Override
-    public void replace(J replacement) {
-      if (isMutable()) {
-        didReplace = true;
-        it.set(replacement);
-      } else {
-        super.replace(replacement);
       }
     }
 
@@ -154,14 +139,48 @@ public abstract class ContextImpl<J> implements Context<J> {
     protected void doTraverse(JsonDdlVisitor visitor) {
       it = value.listIterator();
       while (it.hasNext()) {
-        didReplace = false;
+        reset();
         J temp = configureNestedBuilderKinds(new ObjectContext.Builder<J>())
+            .withEnclosing(this)
             .withValue(it.next())
             .build().traverse(visitor);
-        if (isMutable() && !didReplace) {
+
+        if (isDirty()) {
+          int nextIndex = it.nextIndex();
+          it.remove();
+
+          for (J j : toInsertBefore) {
+            it.add(j);
+          }
+
+          if (didRemove) {
+            nextIndex--;
+          } else {
+            it.add(temp);
+          }
+
+          for (J j : toInsertAfter) {
+            it.add(j);
+          }
+
+          it = value.listIterator(nextIndex + toInsertBefore.size());
+        } else if (isMutable()) {
           it.set(temp);
         }
       }
+    }
+
+    private boolean isDirty() {
+      return didRemove ||
+        !toInsertAfter.isEmpty() ||
+        !toInsertBefore.isEmpty();
+    }
+
+    private void reset() {
+      didRemove = false;
+      toInsertAfter.clear();
+      toInsertBefore.clear();
+      assert !isDirty();
     }
   }
 
@@ -175,7 +194,6 @@ public abstract class ContextImpl<J> implements Context<J> {
     }
 
     private Map.Entry<String, J> currentEntry;
-    private boolean didReplace;
     private Iterator<Map.Entry<String, J>> it;
 
     MapContext() {}
@@ -186,26 +204,11 @@ public abstract class ContextImpl<J> implements Context<J> {
     }
 
     @Override
-    public boolean canReplace() {
-      return isMutable();
-    }
-
-    @Override
     public void remove() {
       if (isMutable()) {
         it.remove();
       } else {
         super.remove();
-      }
-    }
-
-    @Override
-    public void replace(J replacement) {
-      if (isMutable()) {
-        didReplace = true;
-        currentEntry.setValue(replacement);
-      } else {
-        super.replace(replacement);
       }
     }
 
@@ -223,9 +226,10 @@ public abstract class ContextImpl<J> implements Context<J> {
       while (it.hasNext()) {
         currentEntry = it.next();
         J value = configureNestedBuilderKinds(new ObjectContext.Builder<J>())
-              .withValue(currentEntry.getValue())
-              .build().traverse(visitor);
-        if (isMutable() && !didReplace) {
+            .withEnclosing(this)
+            .withValue(currentEntry.getValue())
+            .build().traverse(visitor);
+        if (isMutable()) {
           currentEntry.setValue(value);
         }
       }
@@ -241,6 +245,11 @@ public abstract class ContextImpl<J> implements Context<J> {
         ValueContext.Builder<J> {
       public Builder() {
         super(new ObjectContext<J>());
+      }
+
+      public Builder<J> withEnclosing(ContextImpl<J> delegate) {
+        ctx.enclosingContext = delegate;
+        return this;
       }
     }
 
@@ -346,6 +355,12 @@ public abstract class ContextImpl<J> implements Context<J> {
 
   }
 
+  /**
+   * if a context is being traversed as a member of a collection, a reference to the collection
+   * context will be stored in this field. This allows the visitor to have access to non-localized
+   * side effects (e.g. {@link #insertBefore(Object)}).
+   */
+  ContextImpl<J> enclosingContext;
   Kind kind;
   Class<?> leafType;
   List<Kind> nestedKinds = Collections.emptyList();
@@ -356,17 +371,17 @@ public abstract class ContextImpl<J> implements Context<J> {
 
   @Override
   public boolean canInsert() {
-    return false;
+    return enclosingContext != null && enclosingContext.canInsert() || false;
   }
 
   @Override
   public boolean canRemove() {
-    return false;
+    return enclosingContext != null && enclosingContext.canRemove() || false;
   }
 
   @Override
   public boolean canReplace() {
-    return false;
+    return enclosingContext != null && enclosingContext.canReplace() || false;
   }
 
   @Override
@@ -391,22 +406,38 @@ public abstract class ContextImpl<J> implements Context<J> {
 
   @Override
   public void insertAfter(J next) {
-    throw new UnsupportedOperationException();
+    if (enclosingContext == null) {
+      throw new UnsupportedOperationException();
+    } else {
+      enclosingContext.insertAfter(next);
+    }
   }
 
   @Override
   public void insertBefore(J previous) {
-    throw new UnsupportedOperationException();
+    if (enclosingContext == null) {
+      throw new UnsupportedOperationException();
+    } else {
+      enclosingContext.insertBefore(previous);
+    }
   }
 
   @Override
   public void remove() {
-    throw new UnsupportedOperationException();
+    if (enclosingContext == null) {
+      throw new UnsupportedOperationException();
+    } else {
+      enclosingContext.remove();
+    }
   }
 
   @Override
   public void replace(J replacement) {
-    throw new UnsupportedOperationException();
+    if (enclosingContext == null) {
+      throw new UnsupportedOperationException();
+    } else {
+      enclosingContext.replace(replacement);
+    }
   }
 
   protected boolean isMutable() {
@@ -414,9 +445,11 @@ public abstract class ContextImpl<J> implements Context<J> {
   }
 
   <B extends Builder<?, ?>> B configureNestedBuilderKinds(B builder) {
+    List<Kind> nextNested = new ArrayList<Kind>(getNestedKinds());
+    Kind kind = nextNested.remove(0);
     builder
-        .withKind(getKind())
-        .withNestedKinds(getNestedKinds())
+        .withKind(kind)
+        .withNestedKinds(nextNested)
         .withLeafType(getLeafType())
         .withMutability(isMutable())
         .withProperty(getProperty());
