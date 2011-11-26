@@ -31,6 +31,7 @@ import javax.annotation.Generated;
 import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.generator.Dialect;
+import org.jsonddl.generator.IndentedWriter;
 import org.jsonddl.generator.Options;
 import org.jsonddl.impl.ContextImpl;
 import org.jsonddl.impl.JsonMapVisitor;
@@ -130,6 +131,7 @@ public class IndustrialDialect implements Dialect {
         impl.println("public Class<" + simpleName + "> getDdlObjectType() { return "
           + simpleName + ".class;}");
       }
+
       StringWriter buildContents = new StringWriter();
       PrintWriter build = new PrintWriter(buildContents);
       StringWriter fromContents = new StringWriter();
@@ -251,6 +253,7 @@ public class IndustrialDialect implements Dialect {
       intf.close();
       impl.close();
     }
+    writePackageVisitor(options, s, output, now);
   }
 
   @Override
@@ -263,6 +266,47 @@ public class IndustrialDialect implements Dialect {
       return "null";
     }
     return Kind.class.getCanonicalName() + "." + type.name();
+  }
+
+  /**
+   * Create a convenience base type that pre-defines all method signatures that a visitor for models
+   * in the package would want to define.
+   */
+  private void writePackageVisitor(Options options, Schema s, Collector collector, final Date now)
+      throws IOException {
+    final String packageName = options.getPackageName();
+    final StringBuilder visitorName = new StringBuilder(packageName.substring(packageName
+        .lastIndexOf('.') + 1)).append("Visitor");
+    visitorName.setCharAt(0, Character.toUpperCase(visitorName.charAt(0)));
+    final IndentedWriter out = new IndentedWriter(new OutputStreamWriter(collector.writeJavaSource(
+        packageName, visitorName.toString())));
+    s.accept(new JsonDdlVisitor() {
+      public void endVisit(Schema s) {
+        out.outdent();
+        out.println("}");
+      }
+
+      public boolean visit(Model m) {
+        out.println("public void endVisit(%s x, %s<%s> ctx) throws Exception {}", m.getName(),
+            Context.class.getCanonicalName(), m.getName());
+        out.println("public boolean visit(%s x, %s<%s> ctx) throws Exception { return true; }",
+            m.getName(), Context.class.getCanonicalName(), m.getName());
+        return false;
+      }
+
+      public boolean visit(Schema s) {
+        out.println("package %s;", packageName);
+        out.println(generatedAnnotation(IndustrialDialect.class, now));
+        out.println("/** A convenience base type tha defines visit methods for " +
+            "all model types in the {@code %s} package.*/", packageName);
+        out.println("public class %s implements %s {", visitorName,
+            JsonDdlVisitor.class.getCanonicalName());
+        out.indent();
+        return true;
+      }
+
+    });
+    out.close();
   }
 
   private void writeTraversalForProperty(PrintWriter pw, String propertyName, String getterName,
