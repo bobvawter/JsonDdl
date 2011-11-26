@@ -35,7 +35,7 @@
               </dialects>
             </configuration>
             <goals>
-              <goal>generate-test-sources</goal>
+              <goal>generate-sources</goal>
             </goals>
           </execution>
           <execution>
@@ -43,14 +43,14 @@
             <configuration>
               <!-- Rename inferred schema package -->
               <schemas>
-                <org.jsonddl.test.pojo>src/test/jsonddl/org.jsonddl.test.industrial.js</org.jsonddl.test.pojo>
+                <org.jsonddl.test.pojo>src/main/jsonddl/org.jsonddl.test.industrial.js</org.jsonddl.test.pojo>
               </schemas>
               <dialects>
                 <dialect>pojo</dialect>
               </dialects>
             </configuration>
             <goals>
-              <goal>generate-test-sources</goal>
+              <goal>generate-sources</goal>
             </goals>
           </execution>
         </executions>

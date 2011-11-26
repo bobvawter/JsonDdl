@@ -304,7 +304,35 @@ public abstract class ContextImpl<J> implements Context<J> {
     @Override
     public void replace(T replacement) {
       if (isMutable()) {
-        getLeafType().cast(replacement);
+        Class<?> check;
+        switch (getKind()) {
+          case BOOLEAN:
+            check = Boolean.class;
+            break;
+          case DDL:
+          case ENUM:
+          case EXTERNAL:
+            check = getLeafType();
+            break;
+          case DOUBLE:
+            check = Double.class;
+            break;
+          case INTEGER:
+            check = Integer.class;
+            break;
+          case LIST:
+            check = List.class;
+            break;
+          case MAP:
+            check = Map.class;
+            break;
+          case STRING:
+            check = String.class;
+            break;
+          default:
+            throw new RuntimeException("Unhandled kind " + getKind());
+        }
+        check.cast(replacement);
         didChange = true;
         value = replacement;
       } else {
@@ -335,7 +363,12 @@ public abstract class ContextImpl<J> implements Context<J> {
       if (property != null && visitor instanceof PropertyVisitor) {
         // Create a ValueContext to hold the replacement
         org.jsonddl.impl.ContextImpl.ValueContext<T> ctx =
-            configureNestedBuilderKinds(new ValueContext.Builder<T>())
+            new ValueContext.Builder<T>()
+                .withKind(getKind())
+                .withLeafType(getLeafType())
+                .withMutability(isMutable())
+                .withNestedKinds(getNestedKinds())
+                .withProperty(getProperty())
                 .withValue(value)
                 .build();
 
@@ -448,11 +481,17 @@ public abstract class ContextImpl<J> implements Context<J> {
   }
 
   <B extends Builder<?, ?>> B configureNestedBuilderKinds(B builder) {
-    List<Kind> nextNested = new ArrayList<Kind>(getNestedKinds());
-    Kind kind = nextNested.remove(0);
+    if (getNestedKinds().isEmpty()) {
+      builder.withKind(getKind()).withNestedKinds(Collections.<Kind> emptyList());
+    } else {
+      List<Kind> nextNested = new ArrayList<Kind>(getNestedKinds());
+      if (Kind.MAP.equals(getKind())) {
+        nextNested.remove(0);
+      }
+      builder.withKind(nextNested.remove(0));
+      builder.withNestedKinds(nextNested);
+    }
     builder
-        .withKind(kind)
-        .withNestedKinds(nextNested)
         .withLeafType(getLeafType())
         .withMutability(isMutable())
         .withProperty(getProperty());

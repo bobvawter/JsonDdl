@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -125,10 +126,18 @@ public class JsonDdlMojo extends AbstractMojo {
                 return new FileOutputStream(f);
               }
 
+              private Resource resource;
+
               @Override
               public OutputStream writeResource(String path) throws IOException {
                 File file = new File(outputDirectory, path);
                 file.getParentFile().mkdirs();
+                if (resource == null) {
+                  resource = new Resource();
+                  resource.setDirectory(outputDirectory.getPath());
+                  project.addResource(resource);
+                }
+                resource.addInclude(path);
                 return new FileOutputStream(file);
               }
 

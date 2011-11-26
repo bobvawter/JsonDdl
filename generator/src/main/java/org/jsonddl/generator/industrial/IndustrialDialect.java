@@ -180,8 +180,8 @@ public class IndustrialDialect implements Dialect {
 
         from.println("with" + getterName + "(from.get" + getterName + "());");
 
-        writeTraversalForProperty(traverse, getterName, getterName, type, false);
-        writeTraversalForProperty(traverseMutable, getterName, getterName, type, true);
+        writeTraversalForProperty(traverse, property.getName(), getterName, type, false);
+        writeTraversalForProperty(traverseMutable, property.getName(), getterName, type, true);
       }
       builder.println("public " + builderName + " accept("
         + JsonDdlVisitor.class.getCanonicalName()
@@ -341,7 +341,7 @@ public class IndustrialDialect implements Dialect {
     pw.println(".withLeafType(" + TypeAnswers.getQualifiedLeafTypeName(type) + ".class)");
     pw.println(".withMutability(" + mutable + ")");
     pw.println(".withProperty(\"" + propertyName + "\")");
-    String propertyRef = (mutable ? "obj" : "this") + "." + propertyName;
+    String propertyRef = (mutable ? "obj" : "this") + "." + getterName;
     pw.println(".withValue(" + propertyRef + ")");
     pw.print(".build().traverse(visitor)");
     if (mutable) {

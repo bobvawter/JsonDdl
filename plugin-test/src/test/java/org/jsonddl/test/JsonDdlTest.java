@@ -13,6 +13,8 @@
  */
 package org.jsonddl.test;
 
+import static org.junit.Assert.assertNotNull;
+
 import org.junit.Test;
 
 /**
@@ -27,5 +29,16 @@ public class JsonDdlTest {
   @Test
   public void testPojo() {
     new org.jsonddl.test.pojo.Example();
+  }
+
+  /**
+   * Make sure the expected resources have been made available on the classpath.
+   */
+  @Test
+  public void testResource() {
+    assertNotNull(Thread.currentThread().getContextClassLoader()
+        .getResource("org/jsonddl/test/industrial/idiomatic.js"));
+    assertNotNull(Thread.currentThread().getContextClassLoader()
+        .getResource("org/jsonddl/test/industrial/schema.js"));
   }
 }
