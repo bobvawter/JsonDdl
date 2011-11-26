@@ -103,6 +103,7 @@ public abstract class ContextImpl<J> implements Context<J> {
     @Override
     public void insertAfter(J next) {
       if (isMutable()) {
+        getLeafType().cast(next);
         toInsertAfter.add(0, next);
       } else {
         super.insertAfter(next);
@@ -112,6 +113,7 @@ public abstract class ContextImpl<J> implements Context<J> {
     @Override
     public void insertBefore(J previous) {
       if (isMutable()) {
+        getLeafType().cast(previous);
         toInsertBefore.add(previous);
       } else {
         super.insertBefore(previous);
@@ -302,6 +304,7 @@ public abstract class ContextImpl<J> implements Context<J> {
     @Override
     public void replace(T replacement) {
       if (isMutable()) {
+        getLeafType().cast(replacement);
         didChange = true;
         value = replacement;
       } else {

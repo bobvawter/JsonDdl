@@ -82,15 +82,33 @@ public class ContextImplTest {
         assertTrue(ctx.canInsert());
         assertTrue(ctx.canRemove());
         assertTrue(ctx.canReplace());
+
+        // Make sure bad casts don't happen later
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        Context<Object> rawContext = (Context) ctx;
+
         if (x == foo1) {
           before = makeFoo();
           ctx.insertBefore(before);
 
           after = makeFoo();
           ctx.insertAfter(after);
+
+          try {
+            rawContext.insertAfter(new Object());
+            fail();
+          } catch (ClassCastException expected) {}
+          try {
+            rawContext.insertAfter(new Object());
+            fail();
+          } catch (ClassCastException expected) {}
         } else if (x == after) {
           replacement = makeFoo();
           ctx.replace(replacement);
+          try {
+            rawContext.replace(new Object());
+            fail();
+          } catch (ClassCastException expected) {}
         } else if (x == foo2) {
           ctx.remove();
         } else {
@@ -135,9 +153,19 @@ public class ContextImplTest {
         assertFalse(ctx.canInsert());
         assertTrue(ctx.canRemove());
         assertTrue(ctx.canReplace());
+
+        // Make sure bad casts don't happen later
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        Context<Object> rawContext = (Context) ctx;
+
         if (x == foo1) {
           replacement = makeFoo();
           ctx.replace(replacement);
+
+          try {
+            rawContext.replace(new Object());
+            fail();
+          } catch (ClassCastException expected) {}
         } else if (x == foo2) {
           ctx.remove();
         } else {
@@ -223,6 +251,14 @@ public class ContextImplTest {
 
     assertTrue(ctx.canReplace());
     ctx.replace(false);
+
+    // Make sure bad casts don't happen later
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    Context<Object> rawContext = (Context) ctx;
+    try {
+      rawContext.replace(new Object());
+      fail();
+    } catch (ClassCastException expected) {}
 
     try {
       assertFalse(ctx.canRemove());

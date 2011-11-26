@@ -30,12 +30,20 @@ import org.jsonddl.model.Kind;
  * Visitors need only implement the methods that they are interested in. The {@code visit} method
  * returns a boolean value to indicate if the object being visited should be traversed. If
  * {@code visit} is unimplemented, the default behavior is to traverse the properties of the object.
+ * The {@link Context} parameter may be omittedd if not required.
  */
 public interface JsonDdlVisitor {
   /**
    * The Context interface provides a visitor with information about the object or property being
    * visited. When a visitor is traversing a Bulider, the Context can be used to mutate the object
    * in-place.
+   * <p>
+   * If a raw Context interface is used, it is possible to pass arbitrary data into the mutator
+   * methods (i.e. {@link #insertAfter(Object)}, {@link #insertBefore(Object)},
+   * {@link #replace(Object)} ). To prevent errors, these methods will throw a
+   * {@link ClassCastException} if the object provided is not appropriate for the current slot.
+   * 
+   * @param <J> the type of data stored in the slot being traversed
    */
   public interface Context<J> {
     /**
