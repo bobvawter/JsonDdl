@@ -23,6 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -159,6 +160,7 @@ public class IndustrialDialect implements Dialect {
             + ".object(toReturn." + getterName + ");");
         }
 
+        // Getters, for DDL types and for plain types
         if (Kind.DDL.equals(type.getKind())) {
           // public Foo.Builder getFoo() { Foo.Builder toReturn = obj.foo.builder();
           builder.println("public " + qsn + ".Builder"
@@ -171,15 +173,40 @@ public class IndustrialDialect implements Dialect {
           builder.println("public " + qsn + " get" + getterName + "() { return obj." + getterName
             + "; }");
         }
+        
+        // Setter
         builder.println("public void set" + getterName + "(" + qsn + " value) { with" + getterName
           + "(value);}");
+        // Literate setter
         builder.print(
             "public " + builderName + " with" + getterName + "(" + qsn + " value) { ");
         builder.print("obj." + getterName + " = value;");
         builder.println("return this;}");
+        if (Kind.LIST.equals(type.getKind())) {
+          // Literate list accumulator
+          builder.println("public " + builderName + " add" + getterName + "("
+            + getParameterizedQualifiedSourceName(type.getListElement()) + " element) {");
+          builder.println("if (obj." + getterName + " == null) { obj." + getterName + " = new "
+            + ArrayList.class.getCanonicalName() + "(); }");
+          builder.println("obj." + getterName + ".add(element);");
+          builder.println("return this;");
+          builder.println("}");
+        } else if (Kind.MAP.equals(type.getKind())) {
+          // Literate map accumulator
+          builder.println("public " + builderName + " put" + getterName + "("
+              + getParameterizedQualifiedSourceName(type.getMapKey()) + " key,"
+            + getParameterizedQualifiedSourceName(type.getMapValue()) + " value) {");
+          builder.println("if (obj." + getterName + " == null) { obj." + getterName + " = new "
+            + LinkedHashMap.class.getCanonicalName() + "(); }");
+          builder.println("obj." + getterName + ".put(key, value);");
+          builder.println("return this;");
+          builder.println("}");
+        }
 
+        // Property copy
         from.println("with" + getterName + "(from.get" + getterName + "());");
 
+        // Traversal
         writeTraversalForProperty(traverse, property.getName(), getterName, type, false);
         writeTraversalForProperty(traverseMutable, property.getName(), getterName, type, true);
       }
