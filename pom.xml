@@ -13,8 +13,9 @@
     <version>7</version>
   </parent>
   <modules>
-    <module>jsonddl</module>
     <module>generator</module>
+    <module>industrial-test</module>
+    <module>jsonddl</module>
     <module>plugin</module>
     <module>plugin-test</module>
     <module>processor</module>

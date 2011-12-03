@@ -6,24 +6,34 @@
     <groupId>org.jsonddl</groupId>
     <version>0.1.1-SNAPSHOT</version>
   </parent>
-  <artifactId>processor-test</artifactId>
-  <name>Smoke test for annotation processor</name>
+  <artifactId>industrial-test</artifactId>
+  <name>Tests for industrial dialect</name>
+
 
   <dependencies>
     <dependency>
       <groupId>org.jsonddl</groupId>
       <artifactId>jsonddl</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jsonddl</groupId>
-      <artifactId>processor</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
+
   <build>
+    <plugins>
+      <plugin>
+        <groupId>org.jsonddl</groupId>
+        <artifactId>jsonddl-maven-plugin</artifactId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <id>industrial</id>
+            <goals>
+              <goal>generate-test-sources</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
     <pluginManagement>
       <plugins>
         <plugin>

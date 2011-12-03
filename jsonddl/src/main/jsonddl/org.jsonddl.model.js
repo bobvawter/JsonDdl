@@ -40,6 +40,15 @@ var schema = {
    */
   Model : {
     comment : "",
+    /**
+     * A two-level map that breaks out per-dialect properties to be consumed by
+     * the dialect code-generators.
+     */
+    dialectProperties : {
+      "" : {
+        "" : ""
+      }
+    },
     enumValues : [ "EnumValue" ],
     name : "",
     properties : [ "Property" ]

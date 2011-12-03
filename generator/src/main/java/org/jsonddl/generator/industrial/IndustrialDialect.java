@@ -22,6 +22,7 @@ import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,6 +66,13 @@ public class IndustrialDialect implements Dialect {
     Date now = new Date();
     String packageName = options.getPackageName();
     for (Model model : s.getModels().values()) {
+      Map<String, String> dialectProperties = model.getDialectProperties() == null ? null :
+          model.getDialectProperties().get(getName());
+      if (dialectProperties == null) {
+        // Avoid the need for defensive coding below
+        dialectProperties = Collections.emptyMap();
+      }
+
       String simpleName = model.getName();
       String builderName = simpleName + ".Builder";
       String implName = simpleName + "Impl";
@@ -92,20 +100,22 @@ public class IndustrialDialect implements Dialect {
       }
 
       intf.print("public interface " + simpleName);
-      // XXX implement interfaces
-      // if (typeMap.containsKey("implements")) {
-      // out.print(" implements " + typeMap.remove("implements") + ", ");
-      // } else {
-      // out.print(" implements ");
-      // }
       intf.print(" extends ");
+      if (dialectProperties.containsKey("implements")) {
+        intf.print(dialectProperties.get("implements"));
+        intf.print(", ");
+      }
       intf.print(JsonDdlObject.class.getCanonicalName() + "<" + simpleName + ">");
       intf.println(" {");
 
       StringWriter builderContents = new StringWriter();
       PrintWriter builder = new PrintWriter(builderContents);
       {
-        builder.println("public static class Builder implements "
+        builder.print("public static class Builder ");
+        if (dialectProperties.containsKey("extends")) {
+          builder.print(" extends " + dialectProperties.get("extends"));
+        }
+        builder.println(" implements "
           + JsonDdlObject.Builder.class.getCanonicalName() + "<" + simpleName + ">, "
           + Traversable.class.getCanonicalName() + "<" + simpleName + ">, "
           + simpleName + " {");
@@ -126,7 +136,11 @@ public class IndustrialDialect implements Dialect {
       {
         impl.println("package " + packageName + ";");
         impl.println(generatedAnnotation(getClass(), now));
-        impl.println("class " + implName + " implements "
+        impl.print("class " + implName);
+        if (dialectProperties.containsKey("extends")) {
+          impl.print(" extends " + dialectProperties.get("extends"));
+        }
+        impl.println(" implements "
           + Traversable.class.getCanonicalName() + "<" + simpleName + ">, " + simpleName + " {");
         impl.println("protected " + implName + "() {}");
         impl.println("public Class<" + simpleName + "> getDdlObjectType() { return "
@@ -173,7 +187,7 @@ public class IndustrialDialect implements Dialect {
           builder.println("public " + qsn + " get" + getterName + "() { return obj." + getterName
             + "; }");
         }
-        
+
         // Setter
         builder.println("public void set" + getterName + "(" + qsn + " value) { with" + getterName
           + "(value);}");

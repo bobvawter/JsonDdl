@@ -13,16 +13,6 @@
  */
 package org.jsonddl.maven;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -31,6 +21,17 @@ import org.apache.maven.project.MavenProject;
 import org.jsonddl.generator.Dialect;
 import org.jsonddl.generator.Generator;
 import org.jsonddl.generator.Options;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Runs the JsonDdl code generator.
@@ -69,7 +70,14 @@ public class JsonDdlMojo extends AbstractMojo {
    * 
    * @parameter default-value="${project.build.directory}/generated-sources"
    */
-  private File outputDirectory;
+  private File outputSourceDirectory;
+
+  /**
+   * The destination directory for the generated sources.
+   * 
+   * @parameter default-value="${project.build.directory}/generated-resources"
+   */
+  private File outputResourceDirectory;
 
   /**
    * @parameter default-value="${project}"
@@ -84,14 +92,15 @@ public class JsonDdlMojo extends AbstractMojo {
       if (schemas == null || schemas.isEmpty()) {
         schemas = findFiles("src/test/jsonddl");
       }
-      outputDirectory = new File(outputDirectory, "test-jsonddl");
-      project.addTestCompileSourceRoot(outputDirectory.getAbsolutePath());
+      outputSourceDirectory = new File(outputSourceDirectory, "test-jsonddl");
+      project.addTestCompileSourceRoot(outputSourceDirectory.getAbsolutePath());
+      outputResourceDirectory = new File(outputResourceDirectory, "test-jsonddl");
     } else {
       if (schemas == null || schemas.isEmpty()) {
         schemas = findFiles("src/main/jsonddl");
       }
-      outputDirectory = new File(outputDirectory, "jsonddl");
-      project.addCompileSourceRoot(outputDirectory.getAbsolutePath());
+      outputSourceDirectory = new File(outputSourceDirectory, "jsonddl");
+      project.addCompileSourceRoot(outputSourceDirectory.getAbsolutePath());
     }
     Options options = new Options.Builder()
         .withDialects(Arrays.asList(dialects))
@@ -120,7 +129,8 @@ public class JsonDdlMojo extends AbstractMojo {
               @Override
               public OutputStream writeJavaSource(String packageName, String simpleName)
                   throws IOException {
-                File dir = new File(outputDirectory, packageName.replace('.', File.separatorChar));
+                File dir = new File(outputSourceDirectory, packageName.replace('.',
+                    File.separatorChar));
                 dir.mkdirs();
                 File f = new File(dir, simpleName + ".java");
                 return new FileOutputStream(f);
@@ -130,17 +140,20 @@ public class JsonDdlMojo extends AbstractMojo {
 
               @Override
               public OutputStream writeResource(String path) throws IOException {
-                File file = new File(outputDirectory, path);
+                File file = new File(outputResourceDirectory, path);
                 file.getParentFile().mkdirs();
                 if (resource == null) {
                   resource = new Resource();
-                  resource.setDirectory(outputDirectory.getPath());
-                  project.addResource(resource);
+                  resource.setDirectory(outputResourceDirectory.getPath());
+                  if (isTest()) {
+                    project.addTestResource(resource);
+                  } else {
+                    project.addResource(resource);
+                  }
                 }
                 resource.addInclude(path);
                 return new FileOutputStream(file);
               }
-
             });
         if (!success) {
           throw new MojoFailureException("Code generator did not complete normally");
@@ -162,6 +175,9 @@ public class JsonDdlMojo extends AbstractMojo {
         return pathname.getPath().endsWith(".js");
       }
     });
+    if (files == null || files.length == 0) {
+      return Collections.emptyMap();
+    }
     Map<String, String> toReturn = new LinkedHashMap<String, String>();
     for (File f : files) {
       String localPackage = f.getName();

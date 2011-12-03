@@ -165,11 +165,26 @@ public class Generator {
         }
         builder.withEnumValues(enumValues);
       } else if (propertyDeclarations != null) {
+        Map<String, Map<String, String>> dialectProperties = new TreeMap<String, Map<String, String>>();
         List<Property> properties = new ArrayList<Property>();
         for (ObjectProperty propertyDeclaration : propertyDeclarations.getElements()) {
-          properties.add(extractProperty(propertyDeclaration));
+          String name = extractName(propertyDeclaration);
+          // Look for dialect properties
+          int idx = name.indexOf(':');
+          if (idx != -1) {
+            String dialect = name.substring(0, idx);
+            Map<String, String> map = dialectProperties.get(dialect);
+            if (map == null) {
+              map = new TreeMap<String, String>();
+              dialectProperties.put(dialect, map);
+            }
+            map.put(name.substring(idx + 1),
+                castOrNull(StringLiteral.class, propertyDeclaration.getRight()).getValue());
+          } else {
+            properties.add(extractProperty(propertyDeclaration));
+          }
         }
-        builder.withProperties(properties);
+        builder.withDialectProperties(dialectProperties).withProperties(properties);
       } else {
         throw new UnexpectedNodeException(prop.getRight(),
             "Expecting property declaration object or enum declaration array");
