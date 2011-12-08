@@ -24,10 +24,6 @@ package org.jsonddl.industrial;
  * of the abstract class and {@code industrial:implements} with the name of the interface.
  */
 public interface Base {
-  boolean isStringSet();
-
-  void setRandomString();
-
   public abstract static class Impl implements Extended {
     @Override
     public boolean isStringSet() {
@@ -35,11 +31,17 @@ public interface Base {
     }
 
     @Override
-    public void setRandomString() {
+    public Extended.Builder setRandomString() {
       if (!(this instanceof Extended.Builder)) {
         throw new IllegalStateException();
       }
-      this.builder().setString("Hello World!");
+      Builder builder = this.builder();
+      builder.setString("Hello World!");
+      return builder;
     }
   }
+
+  boolean isStringSet();
+
+  Extended.Builder setRandomString();
 }

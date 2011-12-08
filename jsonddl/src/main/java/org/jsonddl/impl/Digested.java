@@ -11,22 +11,12 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-var schema = {
-  Example : {
-    aBoolean : true,
-    'int' : 0,
-    'double' : 0.1,
-    aString : "",
-    anExample : "Example",
-    anExampleList : [ "Example" ],
-    anIntegralList : [ 0 ],
-    aStringToListOfBooleanMap : {
-      "" : [ true ]
-    }
-  },
-  Extended : {
-    string : "",
-    'industrial:extends' : 'Base.Impl',
-    'industrial:implements' : 'Base'
-  }
-};
+
+package org.jsonddl.impl;
+
+/**
+ * Indicates that an object is capable of providing a digest of its current state.
+ */
+public interface Digested {
+  public byte[] getDigest();
+}

@@ -15,6 +15,25 @@ package org.jsonddl.generator.industrial;
 
 import static org.jsonddl.generator.TypeAnswers.getParameterizedQualifiedSourceName;
 
+import org.jsonddl.JsonDdlObject;
+import org.jsonddl.JsonDdlVisitor;
+import org.jsonddl.generator.Dialect;
+import org.jsonddl.generator.IndentedWriter;
+import org.jsonddl.generator.Options;
+import org.jsonddl.generator.TypeAnswers;
+import org.jsonddl.impl.ContextImpl;
+import org.jsonddl.impl.DigestVisitor;
+import org.jsonddl.impl.Digested;
+import org.jsonddl.impl.JsonMapVisitor;
+import org.jsonddl.impl.Protected;
+import org.jsonddl.impl.Traversable;
+import org.jsonddl.model.EnumValue;
+import org.jsonddl.model.Kind;
+import org.jsonddl.model.Model;
+import org.jsonddl.model.Property;
+import org.jsonddl.model.Schema;
+import org.jsonddl.model.Type;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -29,23 +48,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Generated;
-
-import org.jsonddl.JsonDdlObject;
-import org.jsonddl.JsonDdlVisitor;
-import org.jsonddl.generator.Dialect;
-import org.jsonddl.generator.IndentedWriter;
-import org.jsonddl.generator.Options;
-import org.jsonddl.generator.TypeAnswers;
-import org.jsonddl.impl.ContextImpl;
-import org.jsonddl.impl.JsonMapVisitor;
-import org.jsonddl.impl.Protected;
-import org.jsonddl.impl.Traversable;
-import org.jsonddl.model.EnumValue;
-import org.jsonddl.model.Kind;
-import org.jsonddl.model.Model;
-import org.jsonddl.model.Property;
-import org.jsonddl.model.Schema;
-import org.jsonddl.model.Type;
 
 public class IndustrialDialect implements Dialect {
 
@@ -118,6 +120,7 @@ public class IndustrialDialect implements Dialect {
         builder.println(" implements "
           + JsonDdlObject.Builder.class.getCanonicalName() + "<" + simpleName + ">, "
           + Traversable.class.getCanonicalName() + "<" + simpleName + ">, "
+          + Digested.class.getCanonicalName() + ", "
           + simpleName + " {");
         builder.println("private " + implName + " obj;");
         builder.println("public Builder() {this(new " + implName + "());}");
@@ -129,6 +132,8 @@ public class IndustrialDialect implements Dialect {
           + "(); }");
         builder.println("public " + Map.class.getCanonicalName()
           + "<String, Object> toJsonObject() { return obj.toJsonObject(); }");
+
+        writeObjectMethods(builder, false);
       }
 
       PrintWriter impl = new PrintWriter(new OutputStreamWriter(output.writeJavaSource(
@@ -141,10 +146,14 @@ public class IndustrialDialect implements Dialect {
           impl.print(" extends " + dialectProperties.get("extends"));
         }
         impl.println(" implements "
-          + Traversable.class.getCanonicalName() + "<" + simpleName + ">, " + simpleName + " {");
+          + Traversable.class.getCanonicalName() + "<" + simpleName + ">, "
+          + Digested.class.getCanonicalName() + ", "
+          + simpleName + " {");
         impl.println("protected " + implName + "() {}");
         impl.println("public Class<" + simpleName + "> getDdlObjectType() { return "
           + simpleName + ".class;}");
+
+        writeObjectMethods(impl, true);
       }
 
       StringWriter buildContents = new StringWriter();
@@ -307,6 +316,47 @@ public class IndustrialDialect implements Dialect {
       return "null";
     }
     return Kind.class.getCanonicalName() + "." + type.name();
+  }
+
+  private void writeObjectMethods(PrintWriter out, boolean assumeImmutable) {
+    // Stash the digest for immutable objects
+    if (assumeImmutable) {
+      out.println("private byte[] digest;");
+    }
+    out.println("public byte[] getDigest() {");
+    if (assumeImmutable) {
+      out.println("if (digest == null) {");
+    } else {
+      out.println("byte[] digest;");
+    }
+    // DigestVisitor v =
+    out.println(DigestVisitor.class.getCanonicalName() + " v = new "
+      + DigestVisitor.class.getCanonicalName() + "(); accept(v); digest = v.getDigest();");
+    if (assumeImmutable) {
+      out.println("}");
+    }
+    out.println("return digest;");
+    out.println("}");
+
+    // hashCode()
+    out.println("public int hashCode() {");
+    if (!assumeImmutable) {
+      out.print("byte[] digest = ");
+    }
+    out.println("getDigest();");
+    out.println("return (int)((digest[0] << 3) | (digest[1] << 2) | (digest[18] << 1) | digest[19]);");
+    out.println("}");
+
+    // equals()
+    out.println("public boolean equals(Object o) {");
+    out.println("if (o == this) { return true; }");
+    out.println("if (!(o instanceof " + Digested.class.getCanonicalName()
+      + ")) { return false; }");
+    out.println("byte[] d1 = getDigest(); byte[] d2 = ((" + Digested.class.getCanonicalName()
+      + ")o).getDigest();");
+    out.println("for (int i = 0, j = d1.length; i<j; i++) { if (d1[i] != d2[i]) return false ;}");
+    out.println("return true;");
+    out.println("}");
   }
 
   /**
