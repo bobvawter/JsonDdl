@@ -18,5 +18,5 @@ package org.jsonddl.impl;
  * Indicates that an object is capable of providing a digest of its current state.
  */
 public interface Digested {
-  public byte[] getDigest();
+  public byte[] computeDigest();
 }

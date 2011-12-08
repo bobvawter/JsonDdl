@@ -323,7 +323,7 @@ public class IndustrialDialect implements Dialect {
     if (assumeImmutable) {
       out.println("private byte[] digest;");
     }
-    out.println("public byte[] getDigest() {");
+    out.println("public byte[] computeDigest() {");
     if (assumeImmutable) {
       out.println("if (digest == null) {");
     } else {
@@ -343,7 +343,7 @@ public class IndustrialDialect implements Dialect {
     if (!assumeImmutable) {
       out.print("byte[] digest = ");
     }
-    out.println("getDigest();");
+    out.println("computeDigest();");
     out.println("return (int)((digest[0] << 3) | (digest[1] << 2) | (digest[18] << 1) | digest[19]);");
     out.println("}");
 
@@ -352,8 +352,8 @@ public class IndustrialDialect implements Dialect {
     out.println("if (o == this) { return true; }");
     out.println("if (!(o instanceof " + Digested.class.getCanonicalName()
       + ")) { return false; }");
-    out.println("byte[] d1 = getDigest(); byte[] d2 = ((" + Digested.class.getCanonicalName()
-      + ")o).getDigest();");
+    out.println("byte[] d1 = computeDigest(); byte[] d2 = ((" + Digested.class.getCanonicalName()
+      + ")o).computeDigest();");
     out.println("for (int i = 0, j = d1.length; i<j; i++) { if (d1[i] != d2[i]) return false ;}");
     out.println("return true;");
     out.println("}");

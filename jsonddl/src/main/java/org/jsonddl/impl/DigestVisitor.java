@@ -110,7 +110,7 @@ public class DigestVisitor implements PropertyVisitor {
         sha.update(((Boolean) value).booleanValue() ? (byte) 1 : 0);
         break;
       case DDL:
-        sha.update(((Digested) value).getDigest());
+        sha.update(((Digested) value).computeDigest());
         break;
       case DOUBLE:
         update((Double) value);
@@ -150,7 +150,7 @@ public class DigestVisitor implements PropertyVisitor {
       }
       case EXTERNAL:
         if (value instanceof Digested) {
-          sha.update(((Digested) value).getDigest());
+          sha.update(((Digested) value).computeDigest());
         } else {
           // Fake it.
           update(value.getClass().getName());
