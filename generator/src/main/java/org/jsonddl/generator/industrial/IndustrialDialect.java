@@ -185,6 +185,9 @@ public class IndustrialDialect implements Dialect {
 
         // Getters, for DDL types and for plain types
         if (Kind.DDL.equals(type.getKind())) {
+          if (property.getComment() != null) {
+            builder.println(property.getComment());
+          }
           // public Foo.Builder getFoo() { Foo.Builder toReturn = obj.foo.builder();
           builder.println("public " + qsn + ".Builder"
             + " get" + getterName + "() {");
@@ -199,14 +202,14 @@ public class IndustrialDialect implements Dialect {
 
         // Setter
         if (property.getComment() != null) {
-          intf.println(property.getComment());
+          builder.println(property.getComment());
         }
         builder.println("public void set" + getterName + "(" + qsn + " value) { with" + getterName
           + "(value);}");
 
         // Literate setter
         if (property.getComment() != null) {
-          intf.println(property.getComment());
+          builder.println(property.getComment());
         }
         builder.print(
             "public " + builderName + " with" + getterName + "(" + qsn + " value) { ");
