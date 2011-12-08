@@ -20,20 +20,48 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class IndustrialTest {
 
   @Test
-  public void testDigest() {
+  public void testExtension() {
+    Extended.Builder b = new Extended.Builder();
+    assertTrue(b instanceof Base);
+    assertTrue(b instanceof Base.Impl);
+    assertFalse(b.isStringSet());
+    b.setString("foo");
+    assertTrue(b.isStringSet());
+    b.setRandomString();
+
+    Extended ext = b.build();
+    assertTrue(b instanceof Base);
+    assertTrue(b instanceof Base.Impl);
+    assertTrue(ext.isStringSet());
+    assertEquals("Hello World!", ext.getString());
+
+    try {
+      ext.setRandomString();
+      fail();
+    } catch (IllegalStateException expected) {}
+  }
+
+  @Test
+  public void testObjectMethods() {
     // A builder have object-identity equality
     Example.Builder b1 = new Example.Builder();
     assertTrue(b1.hashCode() != 0);
     checkEquality(b1, b1);
+    checkInequality(b1, new Object());
 
     // A built object should also be equal to itself
     Example empty = b1.build();
     checkEquality(empty, empty);
+    checkInequality(empty, new Object());
 
     // Ensure a new builder is equal to the object that built it
     Example.Builder b2 = empty.builder();
@@ -60,28 +88,30 @@ public class IndustrialTest {
         Arrays.asList(false, true)).build();
     checkInequality(withMap, withSimilarMap);
     checkEquality(withSimilarMap, withSimilarMap.builder());
+    assertFalse(withSimilarMap.toString().contains("true"));
   }
 
   @Test
-  public void testExtension() {
-    Extended.Builder b = new Extended.Builder();
-    assertTrue(b instanceof Base);
-    assertTrue(b instanceof Base.Impl);
-    assertFalse(b.isStringSet());
-    b.setString("foo");
-    assertTrue(b.isStringSet());
-    b.setRandomString();
+  public void testToJsonObject() {
+    Example ex = new Example.Builder()
+        .withABoolean(true)
+        .withAnExample(new Example.Builder().build())
+        .addAnExampleList(new Example.Builder().build())
+        .addAnIntegralList(42)
+        .putAStringToListOfBooleanMap("foo", Arrays.asList(true, false))
+        .build();
+    Map<String, Object> map = ex.toJsonObject();
 
-    Extended ext = b.build();
-    assertTrue(b instanceof Base);
-    assertTrue(b instanceof Base.Impl);
-    assertTrue(ext.isStringSet());
-    assertEquals("Hello World!", ext.getString());
+    // Assert specific iteration order
+    assertEquals(Arrays.asList("aBoolean", "anExample", "anExampleList", "anIntegralList",
+        "aStringToListOfBooleanMap"), new ArrayList<String>(map.keySet()));
 
-    try {
-      ext.setRandomString();
-      fail();
-    } catch (IllegalStateException expected) {}
+    assertEquals(true, map.get("aBoolean"));
+    assertEquals(0, ((Map<?, ?>) map.get("anExample")).size());
+    assertEquals(0, ((Map<?, ?>) ((List<?>) map.get("anExampleList")).get(0)).size());
+    assertEquals(Arrays.asList(42), map.get("anIntegralList"));
+    assertEquals(Collections.singletonMap("foo", Arrays.asList(true, false)),
+        map.get("aStringToListOfBooleanMap"));
   }
 
   private void checkEquality(Object o1, Object o2) {

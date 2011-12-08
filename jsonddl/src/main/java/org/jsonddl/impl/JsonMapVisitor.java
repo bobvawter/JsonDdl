@@ -13,15 +13,15 @@
  */
 package org.jsonddl.impl;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
 import org.jsonddl.model.Kind;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Internal class used to construct the return type of {@link JsonDdlObject#toJsonObject()} and
@@ -40,6 +40,29 @@ public class JsonMapVisitor {
     public Builder withAddNulls(boolean addNulls) {
       v.includeNullProperties = addNulls;
       return this;
+    }
+
+    /**
+     * When set to {@code false}, causes only a summary of the properties to be generated.
+     */
+    public Builder withDeepTraversal(boolean deep) {
+      v.deepTraversal = deep;
+      return this;
+    }
+  }
+
+  /**
+   * Used for shallow traversals of an object's properties.
+   */
+  class ElidingMapper implements Mapper {
+    @Override
+    public Object fromJson(Object value, Class<?> leafType) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Object toJsonObject(Object value) {
+      return "...";
     }
   }
 
@@ -249,6 +272,13 @@ public class JsonMapVisitor {
     return v.getMap();
   }
 
+  public static String toString(JsonDdlObject<?> obj) {
+    ToMapVisitor v = new Builder().withDeepTraversal(false).build().new ToMapVisitor();
+    obj.accept(v);
+    return v.getMap().toString();
+  }
+
+  private boolean deepTraversal = true;
   private boolean includeNullProperties;
 
   private JsonMapVisitor() {}
@@ -268,15 +298,16 @@ public class JsonMapVisitor {
       case INTEGER:
         return PrimitiveMapper.INSTANCE;
       case DDL:
-        return new JsonDdlMapper();
+        return deepTraversal ? new JsonDdlMapper() : new ElidingMapper();
       case ENUM:
       case EXTERNAL:
       case STRING:
         return StringMapper.INSTANCE;
       case LIST:
-        return new ListMapper(makeStringer(list));
+        return deepTraversal ? new ListMapper(makeStringer(list)) : new ElidingMapper();
       case MAP:
-        return new MapMapper(makeStringer(list), makeStringer(list));
+        return deepTraversal ? new MapMapper(makeStringer(list), makeStringer(list))
+            : new ElidingMapper();
     }
     throw new UnsupportedOperationException(kind.toString());
   }

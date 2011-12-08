@@ -198,9 +198,16 @@ public class IndustrialDialect implements Dialect {
         }
 
         // Setter
+        if (property.getComment() != null) {
+          intf.println(property.getComment());
+        }
         builder.println("public void set" + getterName + "(" + qsn + " value) { with" + getterName
           + "(value);}");
+
         // Literate setter
+        if (property.getComment() != null) {
+          intf.println(property.getComment());
+        }
         builder.print(
             "public " + builderName + " with" + getterName + "(" + qsn + " value) { ");
         builder.print("obj." + getterName + " = value;");
@@ -356,6 +363,12 @@ public class IndustrialDialect implements Dialect {
       + ")o).computeDigest();");
     out.println("for (int i = 0, j = d1.length; i<j; i++) { if (d1[i] != d2[i]) return false ;}");
     out.println("return true;");
+    out.println("}");
+
+    // toString()
+    out.println("/** For debugging use only. */");
+    out.println("public String toString() {");
+    out.println("return " + JsonMapVisitor.class.getCanonicalName() + ".toString(this);");
     out.println("}");
   }
 
