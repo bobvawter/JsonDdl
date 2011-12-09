@@ -13,18 +13,7 @@
  */
 package org.jsonddl.generator;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.TreeMap;
+import com.google.gson.Gson;
 
 import org.jsonddl.model.EnumValue;
 import org.jsonddl.model.Kind;
@@ -47,7 +36,18 @@ import org.mozilla.javascript.ast.ObjectProperty;
 import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.VariableDeclaration;
 
-import com.google.gson.Gson;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.TreeMap;
 
 public class Generator {
   public static void main(String[] args) throws IOException {
@@ -87,7 +87,7 @@ public class Generator {
       throws IOException {
     Schema s;
     if (Boolean.TRUE.equals(options.getNormalizedInput())) {
-      s = parseNormalized(schema, output);
+      s = parseNormalized(schema);
     } else {
       s = parseIdiomatic(options, schema, output);
     }
@@ -195,7 +195,7 @@ public class Generator {
     return s;
   }
 
-  Schema parseNormalized(InputStream schema, Dialect.Collector output) throws IOException {
+  Schema parseNormalized(InputStream schema) throws IOException {
     @SuppressWarnings("unchecked")
     Map<String, Object> map = new Gson().fromJson(new InputStreamReader(schema, "UTF8"), Map.class);
     return new Schema.Builder().from(map).build();
@@ -230,14 +230,14 @@ public class Generator {
     return new Property.Builder()
         .withComment(prop.getLeft().getJsDoc())
         .withName(extractName(prop))
-        .withType(typeName(prop.getRight(), false))
+        .withType(typeName(prop.getRight()))
         .build();
   }
 
   /**
    * Convert an AST node to a Java type reference.
    */
-  private Type typeName(AstNode node, boolean forceBoxed) {
+  private Type typeName(AstNode node) {
     StringLiteral string = castOrNull(StringLiteral.class, node);
     if (string != null) {
       String value = string.getValue();
@@ -264,7 +264,7 @@ public class Generator {
       }
       return new Type.Builder()
           .withKind(Kind.LIST)
-          .withListElement(typeName(array.getElement(0), true))
+          .withListElement(typeName(array.getElement(0)))
           .build();
     }
 
@@ -296,8 +296,8 @@ public class Generator {
       ObjectProperty prop = obj.getElements().get(0);
       return new Type.Builder()
           .withKind(Kind.MAP)
-          .withMapKey(typeName(prop.getLeft(), true))
-          .withMapValue(typeName(prop.getRight(), true))
+          .withMapKey(typeName(prop.getLeft()))
+          .withMapValue(typeName(prop.getRight()))
           .build();
     }
 

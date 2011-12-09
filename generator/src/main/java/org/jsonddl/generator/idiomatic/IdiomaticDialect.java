@@ -13,19 +13,19 @@
  */
 package org.jsonddl.generator.idiomatic;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.StringWriter;
-
-import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.generator.Dialect;
 import org.jsonddl.generator.IndentedWriter;
 import org.jsonddl.generator.Options;
 import org.jsonddl.model.EnumValue;
 import org.jsonddl.model.Model;
+import org.jsonddl.model.ModelVisitor;
 import org.jsonddl.model.Property;
 import org.jsonddl.model.Schema;
 import org.jsonddl.model.Type;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.StringWriter;
 
 /**
  * Produces an idiomatic representation of a schema. It won't be character-accurate to the original
@@ -33,14 +33,15 @@ import org.jsonddl.model.Type;
  */
 public class IdiomaticDialect implements Dialect {
 
-  static class Visitor implements JsonDdlVisitor {
+  static class Visitor extends ModelVisitor {
     private final StringWriter contents = new StringWriter();
     private final IndentedWriter out = new IndentedWriter(contents);
     private boolean needsCommaAfterEnum;
     private boolean needsCommaAfterModel;
     private boolean needsCommaAfterProperty;
 
-    public void endVisit(EnumValue v) {
+    @Override
+    public void endVisit(EnumValue v, Context<EnumValue> ctx) {
       if (needsCommaAfterEnum) {
         out.println(",");
       } else {
@@ -53,7 +54,8 @@ public class IdiomaticDialect implements Dialect {
       out.format("\"%s\"", v.getName());
     }
 
-    public void endVisit(Model m) {
+    @Override
+    public void endVisit(Model m, Context<Model> ctx) {
       out.println();
       out.outdent();
       if (m.getEnumValues() != null) {
@@ -63,7 +65,8 @@ public class IdiomaticDialect implements Dialect {
       }
     }
 
-    public void endVisit(Schema s) {
+    @Override
+    public void endVisit(Schema s, Context<Schema> ctx) {
       out.println();
       out.outdent();
       out.println("};");
@@ -74,7 +77,8 @@ public class IdiomaticDialect implements Dialect {
       return contents.toString();
     }
 
-    public boolean visit(Model m) {
+    @Override
+    public boolean visit(Model m, Context<Model> ctx) {
       if (needsCommaAfterModel) {
         out.println(",");
       } else {
@@ -96,7 +100,8 @@ public class IdiomaticDialect implements Dialect {
       return true;
     }
 
-    public boolean visit(Property p) {
+    @Override
+    public boolean visit(Property p, Context<Property> ctx) {
       if (needsCommaAfterProperty) {
         out.println(",");
       } else {
@@ -110,7 +115,8 @@ public class IdiomaticDialect implements Dialect {
       return true;
     }
 
-    public boolean visit(Schema s) {
+    @Override
+    public boolean visit(Schema s, Context<Schema> ctx) {
       if (s.getComment() != null) {
         out.println(s.getComment());
       }
@@ -119,7 +125,8 @@ public class IdiomaticDialect implements Dialect {
       return true;
     }
 
-    public boolean visit(Type t) {
+    @Override
+    public boolean visit(Type t, Context<Type> ctx) {
       switch (t.getKind()) {
         case BOOLEAN:
           out.print("false");

@@ -13,13 +13,15 @@
  */
 package org.jsonddl.generator;
 
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-
 import org.jsonddl.impl.ContextImpl;
 import org.jsonddl.model.Kind;
 import org.jsonddl.model.Type;
+
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TypeAnswers {
   private static final Map<Kind, Class<?>> contextTypes = new EnumMap<Kind, Class<?>>(
@@ -74,6 +76,22 @@ public class TypeAnswers {
         return type.getMapValue().getName();
     }
     return getParameterizedQualifiedSourceName(type);
+  }
+
+  /**
+   * Return a qualified name for a collection's implementation type.
+   */
+  public static String getParameterizedQualifiedImplementationName(Type type) {
+    switch (type.getKind()) {
+      case LIST:
+        return String.format("%s<%s>", ArrayList.class.getCanonicalName(),
+            getParameterizedQualifiedSourceName(type.getListElement()));
+      case MAP:
+        return String.format("%s<%s,%s>", LinkedHashMap.class.getCanonicalName(),
+            getParameterizedQualifiedSourceName(type.getMapKey()),
+            getParameterizedQualifiedSourceName(type.getMapValue()));
+    }
+    throw new UnsupportedOperationException(type.toString());
   }
 
   public static String getParameterizedQualifiedSourceName(Type type) {

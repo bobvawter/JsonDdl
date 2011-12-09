@@ -30,6 +30,7 @@ import org.jsonddl.impl.Traversable;
 import org.jsonddl.model.EnumValue;
 import org.jsonddl.model.Kind;
 import org.jsonddl.model.Model;
+import org.jsonddl.model.ModelVisitor;
 import org.jsonddl.model.Property;
 import org.jsonddl.model.Schema;
 import org.jsonddl.model.Type;
@@ -43,7 +44,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -220,7 +220,7 @@ public class IndustrialDialect implements Dialect {
           builder.println("public " + builderName + " add" + getterName + "("
             + getParameterizedQualifiedSourceName(type.getListElement()) + " element) {");
           builder.println("if (obj." + getterName + " == null) { obj." + getterName + " = new "
-            + ArrayList.class.getCanonicalName() + "(); }");
+            + TypeAnswers.getParameterizedQualifiedImplementationName(type) + "(); }");
           builder.println("obj." + getterName + ".add(element);");
           builder.println("return this;");
           builder.println("}");
@@ -230,7 +230,7 @@ public class IndustrialDialect implements Dialect {
               + getParameterizedQualifiedSourceName(type.getMapKey()) + " key,"
             + getParameterizedQualifiedSourceName(type.getMapValue()) + " value) {");
           builder.println("if (obj." + getterName + " == null) { obj." + getterName + " = new "
-            + LinkedHashMap.class.getCanonicalName() + "(); }");
+            + TypeAnswers.getParameterizedQualifiedImplementationName(type) + "(); }");
           builder.println("obj." + getterName + ".put(key, value);");
           builder.println("return this;");
           builder.println("}");
@@ -387,13 +387,15 @@ public class IndustrialDialect implements Dialect {
     visitorName.setCharAt(0, Character.toUpperCase(visitorName.charAt(0)));
     final IndentedWriter out = new IndentedWriter(new OutputStreamWriter(collector.writeJavaSource(
         packageName, visitorName.toString())));
-    s.accept(new JsonDdlVisitor() {
-      public void endVisit(Schema s) {
+    s.accept(new ModelVisitor() {
+      @Override
+      public void endVisit(Schema s, Context<Schema> ctx) {
         out.outdent();
         out.println("}");
       }
 
-      public boolean visit(Model m) {
+      @Override
+      public boolean visit(Model m, Context<Model> ctx) {
         out.println("public void endVisit(%s x, %s<%s> ctx) throws Exception {}", m.getName(),
             Context.class.getCanonicalName(), m.getName());
         out.println("public boolean visit(%s x, %s<%s> ctx) throws Exception { return true; }",
@@ -401,7 +403,8 @@ public class IndustrialDialect implements Dialect {
         return false;
       }
 
-      public boolean visit(Schema s) {
+      @Override
+      public boolean visit(Schema s, Context<Schema> ctx) {
         out.println("package %s;", packageName);
         out.println(generatedAnnotation(IndustrialDialect.class, now));
         out.println("/** A convenience base type tha defines visit methods for " +
@@ -423,8 +426,8 @@ public class IndustrialDialect implements Dialect {
     }
 
     final List<Kind> kindReferencs = new ArrayList<Kind>();
-    type.accept(new JsonDdlVisitor() {
-      @SuppressWarnings("unused")
+    type.accept(new ModelVisitor() {
+      @Override
       public boolean visit(Type t, Context<Type> ctx) {
         kindReferencs.add(t.getKind());
         return true;

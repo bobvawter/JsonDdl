@@ -57,7 +57,7 @@ public class GeneratorTest {
   @Test
   public void testReparseNormalized() throws IOException {
     InputStream res = getClass().getResourceAsStream("test-schema.js");
-    Schema s = new Generator().parseNormalized(res, new NullCollector());
+    Schema s = new Generator().parseNormalized(res);
     assertEquals(6, s.getModels().size());
   }
 }

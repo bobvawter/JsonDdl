@@ -16,21 +16,21 @@ package org.jsonddl.generator.pojo;
 import static org.jsonddl.generator.industrial.IndustrialDialect.generatedAnnotation;
 import static org.jsonddl.generator.industrial.IndustrialDialect.getterName;
 
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
-import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.generator.Dialect;
 import org.jsonddl.generator.IndentedWriter;
 import org.jsonddl.generator.Options;
 import org.jsonddl.model.Kind;
 import org.jsonddl.model.Model;
+import org.jsonddl.model.ModelVisitor;
 import org.jsonddl.model.Property;
 import org.jsonddl.model.Schema;
 import org.jsonddl.model.Type;
+
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Creates plain-old Java objects.
@@ -40,7 +40,7 @@ public class PojoDialect implements Dialect {
    * Performs the actual code-generation. Decoration of the generated code with additional
    * annotations can be accomplished by overriding any of the {@code beforeX} methods.
    */
-  protected static class Visitor implements JsonDdlVisitor {
+  protected static class Visitor extends ModelVisitor {
     protected final Date now = new Date();
     protected final Options options;
     protected IndentedWriter out;
@@ -53,13 +53,15 @@ public class PojoDialect implements Dialect {
       this.packageName = options.getPackageName();
     }
 
-    public void endVisit(Model m) {
+    @Override
+    public void endVisit(Model m, Context<Model> ctx) {
       out.outdent();
       out.println("}");
       out.close();
     }
 
-    public boolean visit(Model m) throws IOException {
+    @Override
+    public boolean visit(Model m, Context<Model> ctx) throws IOException {
       out = new IndentedWriter(new OutputStreamWriter(
           output.writeJavaSource(packageName, m.getName())));
       out.println("package %s;", packageName);
@@ -73,7 +75,8 @@ public class PojoDialect implements Dialect {
       return true;
     }
 
-    public boolean visit(Property p) {
+    @Override
+    public boolean visit(Property p, Context<Property> ctx) {
       String getterName = getterName(p.getName());
       // Field
       beforeField(p);
@@ -99,7 +102,8 @@ public class PojoDialect implements Dialect {
       return false;
     }
 
-    public boolean visit(Type t) {
+    @Override
+    public boolean visit(Type t, Context<Type> ctx) {
       switch (t.getKind()) {
         case BOOLEAN:
           out.print(Boolean.class.getCanonicalName());
@@ -138,21 +142,29 @@ public class PojoDialect implements Dialect {
 
     /**
      * Called before a field declaration is written.
+     * 
+     * @param p the property whose field declaration is about to be generated
      */
     protected void beforeField(Property p) {}
 
     /**
      * Called before a getter declaration is written.
+     * 
+     * @param p the property whose field getter is about to be generated
      */
     protected void beforeGetter(Property p) {}
 
     /**
      * Called before a type declaration is written.
+     * 
+     * @param m the model whose class declaration is about to be generated
      */
     protected void beforeModel(Model m) {}
 
     /**
      * Called before a setter decleration is written.
+     * 
+     * @param p the property whose setter declaration is about to be generated
      */
     protected void beforeSetter(Property p) {}
   }
