@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Internal class used to construct the return type of {@link JsonDdlObject#toJsonObject()} and
@@ -94,21 +95,32 @@ public class JsonMapVisitor {
     public JsonDdlObject<?> fromJson(Object value, Class<?> leafType) {
       assert JsonDdlObject.class.isAssignableFrom(leafType);
 
-      JsonDdlObject.Builder<?> builder = null;
-      for (Class<?> clazz : leafType.getDeclaredClasses()) {
-        if (JsonDdlObject.Builder.class.isAssignableFrom(clazz)) {
-          try {
-            builder = clazz.asSubclass(JsonDdlObject.Builder.class).newInstance();
+      Class<?> builderClass = builders.get(leafType);
+      if (builderClass == null) {
+        for (Class<?> clazz : leafType.getDeclaredClasses()) {
+          if (JsonDdlObject.Builder.class.isAssignableFrom(clazz)) {
+            builderClass = clazz;
+            builders.put(leafType, builderClass);
             break;
-          } catch (InstantiationException e) {
-            // Should never happen since these are code-gen types
-            throw new RuntimeException(e);
-          } catch (IllegalAccessException e) {
-            // Should never happen since these are code-gen types
-            throw new RuntimeException(e);
           }
         }
       }
+
+      if (builderClass == null) {
+        throw new RuntimeException("Could not find Builder for type " + leafType.getName());
+      }
+
+      JsonDdlObject.Builder<?> builder;
+      try {
+        builder = builderClass.asSubclass(JsonDdlObject.Builder.class).newInstance();
+      } catch (InstantiationException e) {
+        // Should never happen since these are code-gen types
+        throw new RuntimeException(e);
+      } catch (IllegalAccessException e) {
+        // Should never happen since these are code-gen types
+        throw new RuntimeException(e);
+      }
+
       @SuppressWarnings("unchecked")
       Map<String, Object> map = (Map<String, Object>) value;
       builder.from(map);
@@ -261,6 +273,8 @@ public class JsonMapVisitor {
       return false;
     }
   }
+
+  private static final Map<Class<?>, Class<?>> builders = new ConcurrentHashMap<Class<?>, Class<?>>();
 
   public static JsonDdlVisitor fromJsonMap(Map<String, Object> map) {
     return new JsonMapVisitor().new FromMapVisitor(map);
