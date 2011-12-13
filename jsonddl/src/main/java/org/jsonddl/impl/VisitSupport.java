@@ -13,18 +13,69 @@
  */
 package org.jsonddl.impl;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
 import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.JsonDdlVisitor.Context;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Provides runtime support for dynamic visitor methods. This type should not be referenced except
  * by generated code.
  */
 public class VisitSupport {
+
+  private static class Lookup {
+    private final String name;
+    private final Class<?> searchFor;
+    private final Class<?> visitor;
+    private final int hash;
+
+    public Lookup(Class<?> visitor, String name, Class<?> searchFor) {
+      this.name = name.intern();
+      this.searchFor = searchFor;
+      this.visitor = visitor;
+      hash = name.hashCode() * 13 + searchFor.hashCode() * 11 + searchFor.hashCode() * 7;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof Lookup)) {
+        return false;
+      }
+      Lookup other = (Lookup) o;
+      return name.equals(other.name) && searchFor.equals(other.searchFor)
+        && visitor.equals(other.visitor);
+    }
+
+    @Override
+    public int hashCode() {
+      return hash;
+    }
+  }
+
+  /**
+   * Method lookups in findMethod() have been demonstrated to be expensive, so we'll cache them.
+   */
+  private static final Map<Lookup, Method> lookup = new ConcurrentHashMap<Lookup, Method>();
+  private static final Method NULL_METHOD;
+  static {
+    try {
+      NULL_METHOD = Object.class.getMethod("hashCode");
+    } catch (SecurityException e) {
+      // Should never happen
+      throw new RuntimeException("Cannot find Object.hashCode", e);
+    } catch (NoSuchMethodException e) {
+      // Should never happen
+      throw new RuntimeException("Cannot find Object.hashCode", e);
+    }
+  }
 
   public static <J extends JsonDdlObject<J>> void endVisit(JsonDdlVisitor visitor, J obj,
       Context<J> ctx) {
@@ -38,6 +89,11 @@ public class VisitSupport {
   }
 
   private static Method findMethod(Class<?> visitor, String name, Class<?> searchFor) {
+    Lookup l = new Lookup(visitor, name, searchFor);
+    Method found = lookup.get(l);
+    if (found != null) {
+      return found == NULL_METHOD ? null : found;
+    }
     while (searchFor != null) {
       try {
         Method m;
@@ -47,6 +103,7 @@ public class VisitSupport {
           m = visitor.getMethod(name, searchFor);
         }
         m.setAccessible(true);
+        lookup.put(l, m);
         return m;
       } catch (SecurityException e) {
         throw new RuntimeException(e);
@@ -60,6 +117,7 @@ public class VisitSupport {
         }
       }
     }
+    lookup.put(l, NULL_METHOD);
     return null;
   }
 
