@@ -13,6 +13,12 @@
  */
 package org.jsonddl.impl;
 
+import org.jsonddl.JsonDdlObject;
+import org.jsonddl.JsonDdlVisitor;
+import org.jsonddl.JsonDdlVisitor.Context;
+import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
+import org.jsonddl.model.Kind;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -20,12 +26,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-
-import org.jsonddl.JsonDdlObject;
-import org.jsonddl.JsonDdlVisitor;
-import org.jsonddl.JsonDdlVisitor.Context;
-import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
-import org.jsonddl.model.Kind;
 
 public abstract class ContextImpl<J> implements Context<J> {
   public static class Builder<C extends PropertyContext<?, V>, V> {

@@ -247,10 +247,8 @@ public class IndustrialDialect implements Dialect {
         + JsonDdlVisitor.class.getCanonicalName()
         + " visitor) {");
       builder.println("obj = new " + ContextImpl.ObjectContext.Builder.class.getCanonicalName()
-        + "<" + simpleName + ">().withValue(this).withKind("
-        + Kind.class.getCanonicalName()
-        + "."
-        + Kind.DDL.name() + ").withMutability(true).build().traverse(visitor).builder().obj;");
+        + "<" + simpleName + ">().withValue(this).withKind(" + kindReference(Kind.DDL)
+        + ").withMutability(true).build().traverse(visitor).builder().obj;");
       builder.println("return this;");
       builder.println("}");
 
@@ -286,8 +284,7 @@ public class IndustrialDialect implements Dialect {
       impl.println("public " + simpleName + " accept(" + JsonDdlVisitor.class.getCanonicalName()
         + " visitor) {");
       impl.println("return new " + ContextImpl.ObjectContext.Builder.class.getCanonicalName() + "<"
-        + simpleName + ">().withValue(this).withKind(" + Kind.class.getCanonicalName() + "."
-        + Kind.DDL.name()
+        + simpleName + ">().withValue(this).withKind(" + kindReference(Kind.DDL)
         + ").build().traverse(visitor);");
       impl.println("}");
 
