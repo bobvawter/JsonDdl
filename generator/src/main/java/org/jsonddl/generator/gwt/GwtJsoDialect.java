@@ -17,6 +17,10 @@ package org.jsonddl.generator.gwt;
 import static org.jsonddl.generator.industrial.IndustrialDialect.generatedAnnotation;
 import static org.jsonddl.generator.industrial.IndustrialDialect.getterName;
 
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.Date;
+
 import org.jsonddl.generator.Dialect;
 import org.jsonddl.generator.IndentedWriter;
 import org.jsonddl.generator.Options;
@@ -26,10 +30,6 @@ import org.jsonddl.model.ModelVisitor;
 import org.jsonddl.model.Property;
 import org.jsonddl.model.Schema;
 import org.jsonddl.model.Type;
-
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.Date;
 
 /**
  * Creates simple JSO-based accessors for GWT.
@@ -91,7 +91,7 @@ public class GwtJsoDialect implements Dialect {
       // Setter
       out.print("public final native void set%s(", getterName);
       p.getType().accept(this);
-      out.print(" value) /*-{ this.%s = ", p.getName());
+      out.print(" value) /*-{ this['%s'] = ", p.getName());
       writeNativeSetExpression(p);
       out.println("; }-*/;");
       return false;
@@ -152,18 +152,19 @@ public class GwtJsoDialect implements Dialect {
     private void writeNativeGetExpression(Property p) {
       switch (p.getType().getKind()) {
         case BOOLEAN:
-          out.print("!!this.%s", p.getName());
+          out.print("!!this['%s']", p.getName());
           break;
         case DOUBLE:
         case INTEGER:
-          out.print("Number(this.%s)", p.getName());
+          out.print("this.hasOwnProperty('%s') ? Number(this['%1$s']) : 0", p.getName());
           break;
         case ENUM:
           // MyEnum.valueOf("foo");
-          out.print("@%s::valueOf(Ljava/lang/String;)(this.%s)", p.getType().getName(), p.getName());
+          out.print("this['%s'] && @%s::valueOf(Ljava/lang/String;)(this['%1$s'])",
+              p.getName(), p.getType().getName());
           break;
         default:
-          out.print("this.%s", p.getName());
+          out.print("this['%s']", p.getName());
       }
     }
 
