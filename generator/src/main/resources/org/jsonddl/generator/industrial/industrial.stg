@@ -1,4 +1,18 @@
-modelInterface(model, names, now, options, dialectProperties) ::= <<
+/*
+ * Copyright 2011 Robert W. Vawter III <bob@vawter.org>
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+// The main template for a model type's interface. Contains the Builder, too.
+modelInterface(model, now, options, dialectProperties) ::= <<
 package <options.packageName>;
 <generated()>
 <model.comment>
@@ -17,7 +31,8 @@ interfaceGetter(property) ::= <<
 <property.type> get<property.getterName>();
 >>
 
-implementation(model, names, now, options, dialectProperties) ::= <<
+// The main template for a model type's implementation.
+implementation(model, now, options, dialectProperties) ::= <<
 package <options.packageName>;
 <generated()>
 class <model.name>Impl
@@ -47,12 +62,13 @@ class <model.name>Impl
     return this;
   }
   <objectMethods(true)>
-  <model.properties:field(); separator="\n">
+  <model.properties:implementationField(); separator="\n">
   <model.properties:implementationGetter(); separator="\n">
 }
 >>
 
-field(property) ::= "<property.type> <property.getterName>;"
+// Emits the field declaration for a single property
+implementationField(property) ::= "<property.type> <property.getterName>;"
 
 implementationGetter(property) ::= <<
 public <property.type> get<property.getterName>() {
@@ -60,7 +76,8 @@ public <property.type> get<property.getterName>() {
 }
 >>
 
-enumType(model, names, now, options, dialectProperties) ::= <<
+// The main template for an enumerated value
+enumType(model, now, options, dialectProperties) ::= <<
 package <options.packageName>;
 <model.comment>
 <generated()>
@@ -69,6 +86,7 @@ public enum <model.name> {
 }
 >>
 
+// The main template for a model object's Builder
 builder() ::= <<
 <generated()>
 public static class Builder
@@ -128,6 +146,7 @@ public static class Builder
 }
 >>
 
+// Convenience accumulator methods for list properties
 builderAdd(property) ::= <<
 <if(property.type.isKindList)>
 public <model.name>.Builder add<property.getterName>(<property.type.listElement> element) {
@@ -140,9 +159,9 @@ public <model.name>.Builder add<property.getterName>(<property.type.listElement>
 <endif>
 >>
 
+// Returns DDL objects as Builder instances, other types as-is
 builderGetter(property) ::= <<
 <if(property.type.isKindDDL)>
-<property.comment>
 public <property.type>.Builder get<property.getterName>() {
   <property.type>.Builder toReturn = obj.<property.getterName>.builder();
   obj.<property.getterName> = toReturn;
@@ -155,12 +174,15 @@ public <property.type> get<property.getterName>() {
 <endif>
 >>
 
+// A strict setFoo() method that allows the Builder to be treated as a bean-like object.
 builderSetter(property) ::= <<
+<property.comment>
 public void set<property.getterName>(<property.type> value) {
   with<property.getterName>(value);
 }
 >>
 
+// Convenience accumulator method for map properties
 builderPut(property) ::= <<
 <if(property.type.isKindMap)>
 public <model.name>.Builder put<property.getterName>(
@@ -174,20 +196,23 @@ public <model.name>.Builder put<property.getterName>(
 <endif>
 >>
 
+// Constructs a Builder's withFoo() methods
 builderWith(property) ::= <<
+<property.comment>
 public <model.name>.Builder with<property.getterName>(<property.type> value) {
   obj.<property.getterName> = value;
   return this;
 }
 >>
 
-
+// Used by build() to call Protected.object() on potentially-mutable objects
 maybeProtect(property, var) ::= <%
 <if(property.type.shouldProtect)>
 <var>.<property.getterName> = <names.Protected>.object(<var>.<property.getterName>);
 <endif>
 %>
 
+// equals(), hashCode(), toString(), and computeDigest()
 objectMethods(immutable) ::= <<
 <if(immutable)>private byte[] digest;<endif>
 public byte[] computeDigest() {
@@ -233,6 +258,10 @@ public String toString() {
 }
 >>
 
+/* 
+ * Write a single property's traversal code. In the case of mutable properties
+ * (e.g. Builders), a call to the relevant withFoo() method will be emitted.
+ */ 
 traversal(property, mutable, self, visitor) ::= <<
 <if(mutable)>with<property.getterName>(<endif>
 new <property.type.contextBuilderDeclaration>()
@@ -249,13 +278,17 @@ new <property.type.contextBuilderDeclaration>()
   .build().traverse(<visitor>)<if(mutable)>)<endif>;
 >>
 
+// Extract the leaf-most type from a compound type
 leafType(type) ::= <%
-<if(type.isKindList)><leafType(type.listElement)>
-<elseif(type.isKindMap)><leafType(type.mapValue)>
+<if(type.isKindList)>
+  <leafType(type.listElement)>
+<elseif(type.isKindMap)>
+  <leafType(type.mapValue)>
 <else><type>
 <endif>
 %>
 
+// Build the package's convenience visitor base type
 packageVisitor(options, schema, visitorName, now, names) ::= <<
 package <options.packageName>;
 /**

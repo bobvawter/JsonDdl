@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -49,7 +50,6 @@ import org.stringtemplate.v4.AutoIndentWriter;
 import org.stringtemplate.v4.Interpreter;
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroupFile;
-import org.stringtemplate.v4.misc.Aggregate;
 import org.stringtemplate.v4.misc.ObjectModelAdaptor;
 import org.stringtemplate.v4.misc.STNoSuchPropertyException;
 
@@ -82,6 +82,12 @@ public class IndustrialDialect implements Dialect {
   public IndustrialDialect() {
     templates = new STGroupFile(IndustrialDialect.class.getResource("industrial.stg"),
         "UTF8", '<', '>');
+    // Provide the collection of well-known classes to the template
+    Map<String, Object> classMap = new HashMap<String, Object>();
+    for (Class<?> clazz : WELL_KNOWN_CLASSES) {
+      classMap.put(clazz.getSimpleName(), clazz.getCanonicalName());
+    }
+    templates.defineDictionary("names", classMap);
     // Convert a Type to its parameterized, qualified source name
     templates.registerRenderer(Type.class, new AttributeRenderer() {
       @Override
@@ -174,12 +180,7 @@ public class IndustrialDialect implements Dialect {
   }
 
   private ST getTemplate(String name, Options options, Date now) {
-    Aggregate agg = new Aggregate();
-    for (Class<?> clazz : WELL_KNOWN_CLASSES) {
-      agg.properties.put(clazz.getSimpleName(), clazz.getCanonicalName());
-    }
     return templates.getInstanceOf(name)
-        .add("names", agg)
         .add("now", new SimpleDateFormat(GENERATED_DATE_FORMAT).format(now))
         .add("options", options);
   }
@@ -211,7 +212,6 @@ public class IndustrialDialect implements Dialect {
     template.add("visitorName", visitorName);
 
     Writer out = collector.writeJavaSource(packageName, visitorName.toString());
-    template.write(new AutoIndentWriter(out));
-    out.close();
+    renderTemplate(template, out);
   }
 }
