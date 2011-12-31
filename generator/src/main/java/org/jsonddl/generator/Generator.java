@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -54,7 +55,10 @@ import com.google.gson.Gson;
 public class Generator {
   public static void main(String[] args) throws IOException {
     final File outputRoot = new File(args[2]);
-    Options options = new Options.Builder().withPackageName(args[1]).build();
+    Options options = new Options.Builder()
+        .withPackageName(args[1])
+        .withDialects(Collections.singletonList(args[3]))
+        .build();
     new Generator().generate(new FileInputStream(new File(args[0])), options,
         new Dialect.Collector() {
           @Override

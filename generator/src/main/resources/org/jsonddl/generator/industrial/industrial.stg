@@ -1,8 +1,271 @@
-packageVisitor(options, s, now, names) ::= <<
+modelInterface(model, names, now, options, dialectProperties) ::= <<
 package <options.packageName>;
-public class <names.Visitor> implements <names.JsonDdlVisitor> {
-  <s.models.values:endVisit(); separator="\n">
-  <s.models.values:visit(); separator="\n">
+<generated()>
+<model.comment>
+public interface <model.name>
+    extends <names.JsonDdlObject>\<<model.name>\>
+    <if(dialectProperties.implements)>, <dialectProperties.implements><endif> {
+  <builder()>
+  Builder builder();
+  <model.properties:interfaceGetter(); separator="\n">
+  Builder newInstance();
+}
+>>
+
+interfaceGetter(property) ::= <<
+<property.comment>
+<property.type> get<property.getterName>();
+>>
+
+implementation(model, names, now, options, dialectProperties) ::= <<
+package <options.packageName>;
+<generated()>
+class <model.name>Impl
+    <if(dialectProperties.extends)>extends <dialectProperties.extends><endif>
+    implements <names.Traversable>\<<model.name>\>, <names.Digested>, <model.name> {
+  protected <model.name>Impl() {}
+  public Class\<<model.name>\> getDdlObjectType() {
+    return <model.name>.class;
+  }
+  public <model.name> accept(<names.JsonDdlVisitor> visitor) {
+    return new <names.ObjectContext>.Builder\<<model.name>\>()
+        .withValue(this)
+        .withKind(<names.Kind>.DDL)
+        .build().traverse(visitor);
+  }
+  public <model.name>.Builder builder() {
+    return newInstance().from(this);
+  }
+  public <model.name>.Builder newInstance() {
+    return new <model.name>.Builder();
+  }
+  public <names.Map>\<String, Object\> toJsonObject() {
+    return <names.JsonMapVisitor>.toJsonObject(this);
+  }
+  public <model.name> traverse(<names.JsonDdlVisitor> visitor) {
+    <model.properties:traversal(false, "this", "visitor"); separator="\n">
+    return this;
+  }
+  <objectMethods(true)>
+  <model.properties:field(); separator="\n">
+  <model.properties:implementationGetter(); separator="\n">
+}
+>>
+
+field(property) ::= "<property.type> <property.getterName>;"
+
+implementationGetter(property) ::= <<
+public <property.type> get<property.getterName>() {
+  return <property.getterName>;
+}
+>>
+
+enumType(model, names, now, options, dialectProperties) ::= <<
+package <options.packageName>;
+<model.comment>
+<generated()>
+public enum <model.name> {
+  <model.enumValues; separator=",">
+}
+>>
+
+builder() ::= <<
+<generated()>
+public static class Builder
+    <if(dialectProperties.extends)>extends <dialectProperties.extends><endif>
+    implements <names.Builder>\<<model.name>\>,  <names.Traversable>\<<model.name>\>, <names.Digested>, <model.name> {
+  private <model.name>Impl obj;
+  public Builder() {
+    this(new <model.name>Impl());
+  }
+  Builder(<model.name>Impl instance) {
+    this.obj = instance;
+  }
+  public <model.name>.Builder accept(<names.JsonDdlVisitor> visitor) {
+    obj = new <names.ObjectContext>.Builder\<<model.name>\>()
+        .withValue(this)
+        .withKind(<names.Kind>.DDL)
+        .withMutability(true)
+        .build().traverse(visitor).builder().obj;
+    return this;
+  }
+  public <model.name> build() {
+    <model.name>Impl toReturn = obj;
+    obj = null;
+    <model.properties:maybeProtect("toReturn"); separator="\n">
+    return toReturn;
+  }
+  public <model.name>.Builder builder() {
+    return this;
+  }
+  public <model.name>.Builder from(<model.name> copyFrom) {
+    <model.properties:{property|with<property.getterName>(copyFrom.get<property.getterName>());}; separator="\n">
+    return this;
+  }
+  public <model.name>.Builder from(<names.Map>\<String, Object\> map) {
+    accept(<names.JsonMapVisitor>.fromJsonMap(map));
+    return this;
+  }
+  public Class\<<model.name>\> getDdlObjectType() {
+    return <model.name>.class;
+  }
+  public <model.name>.Builder newInstance() {
+    return new <model.name>.Builder();
+  }
+  public <names.Map>\<String, Object\> toJsonObject() {
+    return obj.toJsonObject();
+  }
+  public <model.name>.Builder traverse(<names.JsonDdlVisitor> visitor) {
+    <model.properties:traversal(true, "obj", "visitor"); separator="\n">
+    return this;
+  }
+  <objectMethods(false)>
+  <model.properties:builderAdd(); separator="\n">
+  <model.properties:builderGetter(); separator="\n">
+  <model.properties:builderSetter(); separator="\n">
+  <model.properties:builderPut(); separator="\n">
+  <model.properties:builderWith(); separator="\n">
+}
+>>
+
+builderAdd(property) ::= <<
+<if(property.type.isKindList)>
+public <model.name>.Builder add<property.getterName>(<property.type.listElement> element) {
+  if (obj.<property.getterName> == null) {
+    obj.<property.getterName> = new <names.ArrayList>\<<property.type.listElement>\>();
+  }
+  obj.<property.getterName>.add(element);
+  return this;
+}
+<endif>
+>>
+
+builderGetter(property) ::= <<
+<if(property.type.isKindDDL)>
+<property.comment>
+public <property.type>.Builder get<property.getterName>() {
+  <property.type>.Builder toReturn = obj.<property.getterName>.builder();
+  obj.<property.getterName> = toReturn;
+  return toReturn;
+}
+<else>
+public <property.type> get<property.getterName>() {
+  return obj.<property.getterName>;
+}
+<endif>
+>>
+
+builderSetter(property) ::= <<
+public void set<property.getterName>(<property.type> value) {
+  with<property.getterName>(value);
+}
+>>
+
+builderPut(property) ::= <<
+<if(property.type.isKindMap)>
+public <model.name>.Builder put<property.getterName>(
+    <property.type.mapKey> key, <property.type.mapValue> value) {
+  if (obj.<property.getterName> == null) {
+    obj.<property.getterName> = new <names.LinkedHashMap>\<<property.type.mapKey>, <property.type.mapValue>\>();
+  }
+  obj.<property.getterName>.put(key, value);
+  return this;
+}
+<endif>
+>>
+
+builderWith(property) ::= <<
+public <model.name>.Builder with<property.getterName>(<property.type> value) {
+  obj.<property.getterName> = value;
+  return this;
+}
+>>
+
+
+maybeProtect(property, var) ::= <%
+<if(property.type.shouldProtect)>
+<var>.<property.getterName> = <names.Protected>.object(<var>.<property.getterName>);
+<endif>
+%>
+
+objectMethods(immutable) ::= <<
+<if(immutable)>private byte[] digest;<endif>
+public byte[] computeDigest() {
+  <if(immutable)>if (digest == null) {
+  <else>byte[] digest;
+  <endif>
+  <names.DigestVisitor> v = new <names.DigestVisitor>();
+  accept(v);
+  digest = v.getDigest();
+  <if(immutable)>
+  }
+  <endif>
+  return digest;
+}
+
+public int hashCode() {
+  <if(!immutable)>byte[] digest = <endif>computeDigest();
+  return (int)((digest[0] \<\< 3) | (digest[1] \<\< 2) | (digest[18] \<\< 1) | digest[19]);
+}
+
+public boolean equals(Object o) {
+  if (o == this) {
+    return true;
+  }
+  if (!(o instanceof <names.Digested>)) {
+    return false;
+  }
+  byte[] d1 = computeDigest();
+  byte[] d2 = ((<names.Digested>) o).computeDigest();
+  for (int i = 0, j = d1.length; i\<j; i++) {
+    if (d1[i] != d2[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * For debugging use only.
+ */
+public String toString() {
+  return <names.JsonMapVisitor>.toString(this);
+}
+>>
+
+traversal(property, mutable, self, visitor) ::= <<
+<if(mutable)>with<property.getterName>(<endif>
+new <property.type.contextBuilderDeclaration>()
+  .withKind(<names.Kind>.<property.type.kind>)
+  <if(property.type.nestedKinds)>
+  .withNestedKinds(<names.Arrays>.asList(<property.type.nestedKinds:{kind|<names.Kind>.<kind>}; separator=", ", anchor, wrap>))
+  <endif>
+  .withLeafType(<leafType(property.type)>.class)
+  <if(mutable)>
+  .withMutability(<mutable>)
+  <endif>
+  .withProperty("<property.name>")
+  .withValue(<self>.<property.getterName>)
+  .build().traverse(<visitor>)<if(mutable)>)<endif>;
+>>
+
+leafType(type) ::= <%
+<if(type.isKindList)><leafType(type.listElement)>
+<elseif(type.isKindMap)><leafType(type.mapValue)>
+<else><type>
+<endif>
+%>
+
+packageVisitor(options, schema, visitorName, now, names) ::= <<
+package <options.packageName>;
+/**
+ * A convenience base type that defines visitation methods for all model types in the
+ * {@code <options.packageName>} package.
+ */
+<generated()>
+public class <visitorName> implements <names.JsonDdlVisitor> {
+  <schema.models.values:endVisit(); separator="\n">
+  <schema.models.values:visit(); separator="\n">
 
   /**
    * This method controls the default behavior of the {@code endVisit()} methods.
@@ -19,22 +282,22 @@ public class <names.Visitor> implements <names.JsonDdlVisitor> {
 }
 >>
 
-endVisit(m) ::= <<
-
+endVisit(model) ::= <<
 /**
  * Calls {@link #defaultEndVisit}.
  */
-public void endVisit(<m.name> x, <names.Context>\<<m.name>\> ctx) throws Exception {
+public void endVisit(<model.name> x, <names.Context>\<<model.name>\> ctx) throws Exception {
   defaultEndVisit(x, ctx);
 }
 >>
 
-visit(m) ::= <<
+generated() ::= "@<names.Generated>(value=\"<names.IndustrialDialect>\", date=\"<now>\")"
 
+visit(model) ::= <<
 /**
  * Calls {@link #defaultVisit}.
  */
-public boolean visit(<m.name> x, <names.Context>\<<m.name>\> ctx) throws Exception {
+public boolean visit(<model.name> x, <names.Context>\<<model.name>\> ctx) throws Exception {
   return defaultVisit(x, ctx);
 }
 >>
