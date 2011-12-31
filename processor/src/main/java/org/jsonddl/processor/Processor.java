@@ -15,6 +15,8 @@ package org.jsonddl.processor;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
@@ -73,11 +75,11 @@ public class Processor extends AbstractProcessor {
           }
 
           @Override
-          public OutputStream writeJavaSource(String packageName, String simpleName)
+          public Writer writeJavaSource(String packageName, String simpleName)
                 throws IOException {
             JavaFileObject obj = processingEnv.getFiler().createSourceFile(
                   packageName + "." + simpleName);
-            return obj.openOutputStream();
+            return new OutputStreamWriter(obj.openOutputStream(), SOURCE_CHARSET);
           }
 
           @Override

@@ -16,6 +16,11 @@ package org.jsonddl.generator.pojo;
 import static org.jsonddl.generator.industrial.IndustrialDialect.generatedAnnotation;
 import static org.jsonddl.generator.industrial.IndustrialDialect.getterName;
 
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
 import org.jsonddl.generator.Dialect;
 import org.jsonddl.generator.IndentedWriter;
 import org.jsonddl.generator.Options;
@@ -25,12 +30,6 @@ import org.jsonddl.model.ModelVisitor;
 import org.jsonddl.model.Property;
 import org.jsonddl.model.Schema;
 import org.jsonddl.model.Type;
-
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Creates plain-old Java objects.
@@ -62,8 +61,8 @@ public class PojoDialect implements Dialect {
 
     @Override
     public boolean visit(Model m, Context<Model> ctx) throws IOException {
-      out = new IndentedWriter(new OutputStreamWriter(
-          output.writeJavaSource(packageName, m.getName())));
+      out = new IndentedWriter(
+          output.writeJavaSource(packageName, m.getName()));
       out.println("package %s;", packageName);
       if (m.getComment() != null) {
         out.println(m.getComment());

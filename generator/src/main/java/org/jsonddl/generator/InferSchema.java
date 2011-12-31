@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -103,7 +104,7 @@ public class InferSchema {
       }
 
       @Override
-      public OutputStream writeJavaSource(String packageName, String simpleName) throws IOException {
+      public Writer writeJavaSource(String packageName, String simpleName) throws IOException {
         throw new UnsupportedOperationException();
       }
 

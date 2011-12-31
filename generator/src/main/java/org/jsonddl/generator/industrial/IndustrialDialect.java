@@ -15,10 +15,24 @@ package org.jsonddl.generator.industrial;
 
 import static org.jsonddl.generator.TypeAnswers.getParameterizedQualifiedSourceName;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Generated;
+
 import org.jsonddl.JsonDdlObject;
 import org.jsonddl.JsonDdlVisitor;
+import org.jsonddl.JsonDdlVisitor.Context;
 import org.jsonddl.generator.Dialect;
-import org.jsonddl.generator.IndentedWriter;
 import org.jsonddl.generator.Options;
 import org.jsonddl.generator.TypeAnswers;
 import org.jsonddl.impl.ContextImpl;
@@ -34,20 +48,10 @@ import org.jsonddl.model.ModelVisitor;
 import org.jsonddl.model.Property;
 import org.jsonddl.model.Schema;
 import org.jsonddl.model.Type;
-
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Generated;
+import org.stringtemplate.v4.AutoIndentWriter;
+import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.STGroup;
+import org.stringtemplate.v4.STGroupFile;
 
 public class IndustrialDialect implements Dialect {
 
@@ -79,8 +83,8 @@ public class IndustrialDialect implements Dialect {
       String builderName = simpleName + ".Builder";
       String implName = simpleName + "Impl";
 
-      PrintWriter intf = new PrintWriter(new OutputStreamWriter(output.writeJavaSource(
-          packageName, simpleName)));
+      PrintWriter intf = new PrintWriter(
+          output.writeJavaSource(packageName, simpleName));
 
       intf.println("package " + packageName + ";");
       if (model.getComment() != null) {
@@ -136,8 +140,8 @@ public class IndustrialDialect implements Dialect {
         writeObjectMethods(builder, false);
       }
 
-      PrintWriter impl = new PrintWriter(new OutputStreamWriter(output.writeJavaSource(
-          packageName, implName)));
+      PrintWriter impl = new PrintWriter(
+          output.writeJavaSource(packageName, implName));
       {
         impl.println("package " + packageName + ";");
         impl.println(generatedAnnotation(getClass(), now));
@@ -379,40 +383,24 @@ public class IndustrialDialect implements Dialect {
   private void writePackageVisitor(Options options, Schema s, Collector collector, final Date now)
       throws IOException {
     final String packageName = options.getPackageName();
-    final StringBuilder visitorName = new StringBuilder(packageName.substring(packageName
+    StringBuilder visitorName = new StringBuilder(packageName.substring(packageName
         .lastIndexOf('.') + 1)).append("Visitor");
+    STGroup.trackCreationEvents = true;
+    STGroupFile file = new STGroupFile(IndustrialDialect.class.getResource("industrial.stg"),
+        "UTF8", '<', '>');
     visitorName.setCharAt(0, Character.toUpperCase(visitorName.charAt(0)));
-    final IndentedWriter out = new IndentedWriter(new OutputStreamWriter(collector.writeJavaSource(
-        packageName, visitorName.toString())));
-    s.accept(new ModelVisitor() {
-      @Override
-      public void endVisit(Schema s, Context<Schema> ctx) {
-        out.outdent();
-        out.println("}");
-      }
 
-      @Override
-      public boolean visit(Model m, Context<Model> ctx) {
-        out.println("public void endVisit(%s x, %s<%s> ctx) throws Exception {}", m.getName(),
-            Context.class.getCanonicalName(), m.getName());
-        out.println("public boolean visit(%s x, %s<%s> ctx) throws Exception { return true; }",
-            m.getName(), Context.class.getCanonicalName(), m.getName());
-        return false;
-      }
+    ST template = file.getInstanceOf("packageVisitor");
+    template.add("options", options);
+    template.add("s", s);
+    template.add("now", now);
+    template.addAggr("names.{Context, JsonDdlObject, JsonDdlVisitor, Visitor}",
+        Context.class.getCanonicalName(),
+        JsonDdlObject.class.getCanonicalName(),
+        JsonDdlVisitor.class.getCanonicalName(), visitorName);
 
-      @Override
-      public boolean visit(Schema s, Context<Schema> ctx) {
-        out.println("package %s;", packageName);
-        out.println(generatedAnnotation(IndustrialDialect.class, now));
-        out.println("/** A convenience base type tha defines visit methods for " +
-            "all model types in the {@code %s} package.*/", packageName);
-        out.println("public class %s implements %s {", visitorName,
-            JsonDdlVisitor.class.getCanonicalName());
-        out.indent();
-        return true;
-      }
-
-    });
+    Writer out = collector.writeJavaSource(packageName, visitorName.toString());
+    template.write(new AutoIndentWriter(out));
     out.close();
   }
 

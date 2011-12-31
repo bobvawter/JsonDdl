@@ -15,6 +15,8 @@ package org.jsonddl.generator;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.ServiceLoader;
 
 import org.jsonddl.model.Schema;
@@ -29,6 +31,12 @@ public interface Dialect {
    */
   public interface Collector {
     /**
+     * The charset ({@code UTF8}) used by the {@link Writer} returned from
+     * {@link #writeJavaSource(String, String)}.
+     */
+    public static final Charset SOURCE_CHARSET = Charset.forName("UTF8");
+
+    /**
      * Write an informational message to be displayed in the runtime environment.
      */
     void println(String message);
@@ -39,7 +47,7 @@ public interface Dialect {
     void println(String format, Object... args);
 
     /**
-     * Create an OutputStream that collects source code to be compiled.
+     * Create a Writer that collects source code to be compiled.
      * 
      * @param packageName the dotted package name (e.g. {@code org.jsonddl}) of the type being
      *          created
@@ -47,7 +55,7 @@ public interface Dialect {
      * @return an OutputStream that collects the contents for the new type. The caller must call
      *         {@link OutputStream#close()} to ensure that the contents of the file are committed.
      */
-    OutputStream writeJavaSource(String packageName, String simpleName) throws IOException;
+    Writer writeJavaSource(String packageName, String simpleName) throws IOException;
 
     /**
      * Create an OutputStream that collects the contents of additional resources.

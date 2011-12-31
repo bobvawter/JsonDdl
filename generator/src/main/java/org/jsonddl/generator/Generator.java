@@ -13,7 +13,20 @@
  */
 package org.jsonddl.generator;
 
-import com.google.gson.Gson;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.TreeMap;
 
 import org.jsonddl.model.EnumValue;
 import org.jsonddl.model.Kind;
@@ -36,18 +49,7 @@ import org.mozilla.javascript.ast.ObjectProperty;
 import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.VariableDeclaration;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.TreeMap;
+import com.google.gson.Gson;
 
 public class Generator {
   public static void main(String[] args) throws IOException {
@@ -66,12 +68,12 @@ public class Generator {
           }
 
           @Override
-          public OutputStream writeJavaSource(String packageName, String simpleName)
+          public Writer writeJavaSource(String packageName, String simpleName)
               throws IOException {
             File f = new File(outputRoot, packageName.replace('.', File.separatorChar));
             f.mkdirs();
             f = new File(f, simpleName + ".java");
-            return new FileOutputStream(f);
+            return new OutputStreamWriter(new FileOutputStream(f), SOURCE_CHARSET);
           }
 
           @Override

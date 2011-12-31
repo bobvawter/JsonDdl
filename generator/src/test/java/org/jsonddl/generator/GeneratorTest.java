@@ -15,15 +15,17 @@ package org.jsonddl.generator;
 
 import static org.junit.Assert.assertEquals;
 
-import org.jsonddl.model.Schema;
-import org.junit.Test;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Map;
 import java.util.TreeMap;
+
+import org.jsonddl.model.Schema;
+import org.junit.Test;
 
 /**
  * Integration tests for the generator frontend.
@@ -40,10 +42,10 @@ public class GeneratorTest {
     public void println(String format, Object... args) {}
 
     @Override
-    public OutputStream writeJavaSource(String packageName, String simpleName) throws IOException {
+    public Writer writeJavaSource(String packageName, String simpleName) throws IOException {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       sources.put(packageName + "::" + simpleName, out);
-      return out;
+      return new OutputStreamWriter(out, SOURCE_CHARSET);
     }
 
     @Override

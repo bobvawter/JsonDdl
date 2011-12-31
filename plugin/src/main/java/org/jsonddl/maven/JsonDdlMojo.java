@@ -13,6 +13,19 @@
  */
 package org.jsonddl.maven;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -21,17 +34,6 @@ import org.apache.maven.project.MavenProject;
 import org.jsonddl.generator.Dialect;
 import org.jsonddl.generator.Generator;
 import org.jsonddl.generator.Options;
-
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * Runs the JsonDdl code generator.
@@ -116,6 +118,8 @@ public class JsonDdlMojo extends AbstractMojo {
             new FileInputStream(schemaFile),
             options.builder().withPackageName(schema.getKey()).build(),
             new Dialect.Collector() {
+              private Resource resource;
+
               @Override
               public void println(String message) {
                 getLog().info(message);
@@ -127,16 +131,14 @@ public class JsonDdlMojo extends AbstractMojo {
               }
 
               @Override
-              public OutputStream writeJavaSource(String packageName, String simpleName)
+              public Writer writeJavaSource(String packageName, String simpleName)
                   throws IOException {
                 File dir = new File(outputSourceDirectory, packageName.replace('.',
                     File.separatorChar));
                 dir.mkdirs();
                 File f = new File(dir, simpleName + ".java");
-                return new FileOutputStream(f);
+                return new OutputStreamWriter(new FileOutputStream(f), SOURCE_CHARSET);
               }
-
-              private Resource resource;
 
               @Override
               public OutputStream writeResource(String path) throws IOException {

@@ -1,0 +1,40 @@
+packageVisitor(options, s, now, names) ::= <<
+package <options.packageName>;
+public class <names.Visitor> implements <names.JsonDdlVisitor> {
+  <s.models.values:endVisit(); separator="\n">
+  <s.models.values:visit(); separator="\n">
+
+  /**
+   * This method controls the default behavior of the {@code endVisit()} methods.
+   */
+  protected \<T extends <names.JsonDdlObject>\<T\>\> void defaultEndVisit(<names.JsonDdlObject> x, <names.Context>\<T\> ctx) {}
+
+  /**
+   * This method controls the default behavior of the {@code visit()} methods.
+   * @return {@code true}
+   */
+  protected \<T extends <names.JsonDdlObject>\<T\>\> boolean defaultVisit(T x, <names.Context>\<T\> ctx) {
+    return true;
+  }
+}
+>>
+
+endVisit(m) ::= <<
+
+/**
+ * Calls {@link #defaultEndVisit}.
+ */
+public void endVisit(<m.name> x, <names.Context>\<<m.name>\> ctx) throws Exception {
+  defaultEndVisit(x, ctx);
+}
+>>
+
+visit(m) ::= <<
+
+/**
+ * Calls {@link #defaultVisit}.
+ */
+public boolean visit(<m.name> x, <names.Context>\<<m.name>\> ctx) throws Exception {
+  return defaultVisit(x, ctx);
+}
+>>

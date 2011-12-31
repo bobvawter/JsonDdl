@@ -18,7 +18,6 @@ import static org.jsonddl.generator.industrial.IndustrialDialect.generatedAnnota
 import static org.jsonddl.generator.industrial.IndustrialDialect.getterName;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.Date;
 
 import org.jsonddl.generator.Dialect;
@@ -60,8 +59,8 @@ public class GwtJsoDialect implements Dialect {
 
     @Override
     public boolean visit(Model m, Context<Model> ctx) throws IOException {
-      out = new IndentedWriter(new OutputStreamWriter(
-          output.writeJavaSource(packageName, m.getName())));
+      out = new IndentedWriter(
+          output.writeJavaSource(packageName, m.getName()));
       out.println("package %s;", packageName);
       if (m.getComment() != null) {
         out.println(m.getComment());
