@@ -14,8 +14,8 @@
 // The main template for a model type's interface. Contains the Builder, too.
 modelInterface(model, now, options, dialectProperties) ::= <<
 package <options.packageName>;
-<generated()>
 <model.comment>
+<generated()>
 public interface <model.name>
     extends <names.JsonDdlObject>\<<model.name>\>
     <if(dialectProperties.implements)>, <dialectProperties.implements><endif> {
@@ -82,12 +82,16 @@ package <options.packageName>;
 <model.comment>
 <generated()>
 public enum <model.name> {
-  <model.enumValues; separator=",">
+  <model.enumValues:{value|<value.comment><value.name>}; separator=", ", wrap, anchor>;
 }
 >>
 
 // The main template for a model object's Builder
 builder() ::= <<
+/**
+ * Constructs instances of {@link <model.name>}. Instances of Builder should not be
+ * reused after calling {@link #build()}.
+ */
 <generated()>
 public static class Builder
     <if(dialectProperties.extends)>extends <dialectProperties.extends><endif>
@@ -149,11 +153,22 @@ public static class Builder
 // Convenience accumulator methods for list properties
 builderAdd(property) ::= <<
 <if(property.type.isKindList)>
+/**
+ * Convenience method for adding members to the {@code <property.name>} property. If the
+ * {@code <property.name>} property has not been previously set, it will be initialized with an
+ * empty list. If the current value of {@code <property.name>} is immutable, it will be replaced
+ * with a mutable list.
+ */
 public <model.name>.Builder add<property.getterName>(<property.type.listElement> element) {
   if (obj.<property.getterName> == null) {
     obj.<property.getterName> = new <names.ArrayList>\<<property.type.listElement>\>();
   }
-  obj.<property.getterName>.add(element);
+  try {
+    obj.<property.getterName>.add(element);
+  } catch (<names.UnsupportedOperationException> e) {
+    obj.<property.getterName> = new <names.ArrayList>\<<property.type.listElement>\>(obj.<property.getterName>);
+    obj.<property.getterName>.add(element);
+  }
   return this;
 }
 <endif>
@@ -185,12 +200,23 @@ public void set<property.getterName>(<property.type> value) {
 // Convenience accumulator method for map properties
 builderPut(property) ::= <<
 <if(property.type.isKindMap)>
+/**
+ * Convenience method for adding members to the {@code <property.name>} property. If the
+ * {@code <property.name>} property has not been previously set, it will be initialized with an
+ * empty map. If the current value of {@code <property.name>} is immutable, it will be replaced
+ * with a mutable map.
+ */
 public <model.name>.Builder put<property.getterName>(
     <property.type.mapKey> key, <property.type.mapValue> value) {
   if (obj.<property.getterName> == null) {
     obj.<property.getterName> = new <names.LinkedHashMap>\<<property.type.mapKey>, <property.type.mapValue>\>();
   }
-  obj.<property.getterName>.put(key, value);
+  try {
+    obj.<property.getterName>.put(key, value);
+  } catch (<names.UnsupportedOperationException> e) {
+    obj.<property.getterName> = new <names.LinkedHashMap>\<<property.type.mapKey>, <property.type.mapValue>\>(obj.<property.getterName>);
+    obj.<property.getterName>.put(key, value);
+  }
   return this;
 }
 <endif>
@@ -289,7 +315,7 @@ leafType(type) ::= <%
 %>
 
 // Build the package's convenience visitor base type
-packageVisitor(options, schema, visitorName, now, names) ::= <<
+packageVisitor(options, schema, visitorName, now) ::= <<
 package <options.packageName>;
 /**
  * A convenience base type that defines visitation methods for all model types in the
@@ -303,7 +329,7 @@ public class <visitorName> implements <names.JsonDdlVisitor> {
   /**
    * This method controls the default behavior of the {@code endVisit()} methods.
    */
-  protected \<T extends <names.JsonDdlObject>\<T\>\> void defaultEndVisit(<names.JsonDdlObject> x, <names.Context>\<T\> ctx) {}
+  protected \<T extends <names.JsonDdlObject>\<T\>\> void defaultEndVisit(T x, <names.Context>\<T\> ctx) {}
 
   /**
    * This method controls the default behavior of the {@code visit()} methods.
@@ -316,21 +342,21 @@ public class <visitorName> implements <names.JsonDdlVisitor> {
 >>
 
 endVisit(model) ::= <<
-/**
+<if(!model.enumValues)>/**
  * Calls {@link #defaultEndVisit}.
  */
 public void endVisit(<model.name> x, <names.Context>\<<model.name>\> ctx) throws Exception {
   defaultEndVisit(x, ctx);
-}
+}<endif>
 >>
 
 generated() ::= "@<names.Generated>(value=\"<names.IndustrialDialect>\", date=\"<now>\")"
 
 visit(model) ::= <<
-/**
+<if(!model.enumValues)>/**
  * Calls {@link #defaultVisit}.
  */
 public boolean visit(<model.name> x, <names.Context>\<<model.name>\> ctx) throws Exception {
   return defaultVisit(x, ctx);
-}
+}<endif>
 >>

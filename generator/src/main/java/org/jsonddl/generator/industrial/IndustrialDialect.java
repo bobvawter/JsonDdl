@@ -63,7 +63,8 @@ public class IndustrialDialect implements Dialect {
       Arrays.class, JsonDdlObject.Builder.class, Context.class, Digested.class,
       DigestVisitor.class, IndustrialDialect.class, Kind.class, Generated.class,
       JsonDdlObject.class, JsonDdlVisitor.class, JsonMapVisitor.class, LinkedHashMap.class,
-      List.class, Map.class, ObjectContext.class, Protected.class, Traversable.class);
+      List.class, Map.class, ObjectContext.class, Protected.class, Traversable.class,
+      UnsupportedOperationException.class);
 
   public static String generatedAnnotation(Class<? extends Dialect> clazz, Date now) {
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");

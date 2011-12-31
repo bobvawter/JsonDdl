@@ -18,15 +18,32 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Test;
+
 public class IndustrialTest {
+
+  @Test
+  public void testCollections() {
+    Example.Builder b = new Example.Builder();
+    b.addAnIntegralList(1);
+    b.putAStringToListOfBooleanMap("foo", Arrays.asList(true));
+
+    Example ex = b.build();
+
+    Example.Builder b2 = ex.builder();
+    b2.addAnIntegralList(2);
+    b2.putAStringToListOfBooleanMap("bar", Arrays.asList(false));
+
+    Example ex2 = b2.build();
+    assertEquals(Arrays.asList(1, 2), ex2.getAnIntegralList());
+    assertEquals(2, ex2.getAStringToListOfBooleanMap().size());
+  }
 
   @Test
   public void testExtension() {
