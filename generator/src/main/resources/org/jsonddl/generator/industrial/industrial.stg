@@ -12,7 +12,7 @@
  * the License.
  */
 // The main template for a model type's interface. Contains the Builder, too.
-modelInterface(model, now, options, dialectProperties) ::= <<
+modelInterface(model, options, dialectProperties) ::= <<
 package <options.packageName>;
 <model.comment>
 <generated()>
@@ -32,7 +32,7 @@ interfaceGetter(property) ::= <<
 >>
 
 // The main template for a model type's implementation.
-implementation(model, now, options, dialectProperties) ::= <<
+implementation(model, options, dialectProperties) ::= <<
 package <options.packageName>;
 <generated()>
 class <model.name>Impl
@@ -77,7 +77,7 @@ public <property.type> get<property.getterName>() {
 >>
 
 // The main template for an enumerated value
-enumType(model, now, options, dialectProperties) ::= <<
+enumType(model, options, dialectProperties) ::= <<
 package <options.packageName>;
 <model.comment>
 <generated()>
@@ -290,7 +290,7 @@ public String toString() {
  */ 
 traversal(property, mutable, self, visitor) ::= <<
 <if(mutable)>with<property.getterName>(<endif>
-new <property.type.contextBuilderDeclaration>()
+new <contextBuilderDeclaration(property.type)>()
   .withKind(<names.Kind>.<property.type.kind>)
   <if(property.type.nestedKinds)>
   .withNestedKinds(<names.Arrays>.asList(<property.type.nestedKinds:{kind|<names.Kind>.<kind>}; separator=", ", anchor, wrap>))
@@ -304,6 +304,31 @@ new <property.type.contextBuilderDeclaration>()
   .build().traverse(<visitor>)<if(mutable)>)<endif>;
 >>
 
+/**
+ * Convert a type to the ContextImpl subtype and necessary parameterization
+ * @return ContextImplBlah.Builder<SomeType>
+ */
+contextBuilderDeclaration(type) ::= <%
+<if(type.isKindList && type.listElement.isKindDdl)>
+  <names.ListContext>
+<elseif(type.isKindMap && type.mapValue.isKindDdl)>
+  <names.MapContext>
+<elseif(type.isKindDdl)>
+  <names.ObjectContext>
+<else>
+  <names.ValueContext>
+<endif>
+.Builder\<
+<if(type.isKindList && type.listElement.isKindDdl)>
+  <type.listElement>
+<elseif(type.isKindMap && type.mapValue.isKindDdl)>
+  <type.mapValue>
+<else>
+  <type>
+<endif>
+>
+%>
+
 // Extract the leaf-most type from a compound type
 leafType(type) ::= <%
 <if(type.isKindList)>
@@ -315,7 +340,7 @@ leafType(type) ::= <%
 %>
 
 // Build the package's convenience visitor base type
-packageVisitor(options, schema, visitorName, now) ::= <<
+packageVisitor(options, schema, visitorName) ::= <<
 package <options.packageName>;
 /**
  * A convenience base type that defines visitation methods for all model types in the
@@ -350,7 +375,7 @@ public void endVisit(<model.name> x, <names.Context>\<<model.name>\> ctx) throws
 }<endif>
 >>
 
-generated() ::= "@<names.Generated>(value=\"<names.IndustrialDialect>\", date=\"<now>\")"
+generated() ::= "@<names.Generated>(value=\"<names.IndustrialDialect>\", date=\"<now()>\")"
 
 visit(model) ::= <<
 <if(!model.enumValues)>/**

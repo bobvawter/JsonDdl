@@ -19,10 +19,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import javax.annotation.Generated;
@@ -32,8 +30,11 @@ import org.jsonddl.JsonDdlVisitor;
 import org.jsonddl.JsonDdlVisitor.Context;
 import org.jsonddl.generator.Dialect;
 import org.jsonddl.generator.Options;
-import org.jsonddl.generator.TypeAnswers;
+import org.jsonddl.generator.TemplateDialect;
+import org.jsonddl.impl.ContextImpl.ListContext;
+import org.jsonddl.impl.ContextImpl.MapContext;
 import org.jsonddl.impl.ContextImpl.ObjectContext;
+import org.jsonddl.impl.ContextImpl.ValueContext;
 import org.jsonddl.impl.DigestVisitor;
 import org.jsonddl.impl.Digested;
 import org.jsonddl.impl.JsonMapVisitor;
@@ -41,30 +42,22 @@ import org.jsonddl.impl.Protected;
 import org.jsonddl.impl.Traversable;
 import org.jsonddl.model.Kind;
 import org.jsonddl.model.Model;
-import org.jsonddl.model.ModelVisitor;
-import org.jsonddl.model.Property;
 import org.jsonddl.model.Schema;
-import org.jsonddl.model.Type;
-import org.stringtemplate.v4.AttributeRenderer;
-import org.stringtemplate.v4.AutoIndentWriter;
-import org.stringtemplate.v4.Interpreter;
 import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
-import org.stringtemplate.v4.misc.ObjectModelAdaptor;
-import org.stringtemplate.v4.misc.STNoSuchPropertyException;
 
-public class IndustrialDialect implements Dialect {
-  private static final String GENERATED_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
+public class IndustrialDialect extends TemplateDialect {
 
   /**
    * The classes that are referenced from the templates via the {@code names} dictionary.
    */
   private static List<Class<?>> WELL_KNOWN_CLASSES = Arrays.<Class<?>> asList(ArrayList.class,
       Arrays.class, JsonDdlObject.Builder.class, Context.class, Digested.class,
-      DigestVisitor.class, IndustrialDialect.class, Kind.class, Generated.class,
+      DigestVisitor.class, Generated.class, IndustrialDialect.class, Kind.class,
       JsonDdlObject.class, JsonDdlVisitor.class, JsonMapVisitor.class, LinkedHashMap.class,
-      List.class, Map.class, ObjectContext.class, Protected.class, Traversable.class,
-      UnsupportedOperationException.class);
+      List.class, ListContext.class, Map.class, MapContext.class, ObjectContext.class,
+      Protected.class, Traversable.class, UnsupportedOperationException.class, ValueContext.class);
 
   public static String generatedAnnotation(Class<? extends Dialect> clazz, Date now) {
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
@@ -78,137 +71,56 @@ public class IndustrialDialect implements Dialect {
       + (propertyName.length() > 1 ? propertyName.substring(1) : "");
   }
 
-  private final STGroupFile templates;
-
-  public IndustrialDialect() {
-    templates = new STGroupFile(IndustrialDialect.class.getResource("industrial.stg"),
-        "UTF8", '<', '>');
-    // Provide the collection of well-known classes to the template
-    Map<String, Object> classMap = new HashMap<String, Object>();
-    for (Class<?> clazz : WELL_KNOWN_CLASSES) {
-      classMap.put(clazz.getSimpleName(), clazz.getCanonicalName());
-    }
-    templates.defineDictionary("names", classMap);
-    // Convert a Type to its parameterized, qualified source name
-    templates.registerRenderer(Type.class, new AttributeRenderer() {
-      @Override
-      public String toString(Object o, String formatString, Locale locale) {
-        return TypeAnswers.getParameterizedQualifiedSourceName((Type) o);
-      }
-    });
-    // Add a magic "getterName" property to Property objects for use by the templates
-    templates.registerModelAdaptor(Property.class, new ObjectModelAdaptor() {
-      @Override
-      public Object getProperty(Interpreter interp, ST self, Object o, Object property,
-          String propertyName) throws STNoSuchPropertyException {
-        if ("getterName".equals(propertyName)) {
-          return getterName(((Property) o).getName());
-        }
-        return super.getProperty(interp, self, o, property, propertyName);
-      }
-    });
-    // Map TypeAnswers methods onto Type objects
-    templates.registerModelAdaptor(Type.class, new ObjectModelAdaptor() {
-      @Override
-      public Object getProperty(Interpreter interp, ST self, Object o, Object property,
-          String propertyName) throws STNoSuchPropertyException {
-        if ("contextBuilderDeclaration".equals(propertyName)) {
-          return TypeAnswers.getContextBuilderDeclaration((Type) o);
-        }
-        if ("nestedKinds".equals(propertyName)) {
-          // A list of the inner kind parameterizations
-          final List<Kind> kindReferences = new ArrayList<Kind>();
-          ((Type) o).accept(new ModelVisitor() {
-            @Override
-            public boolean visit(Type t, Context<Type> ctx) {
-              kindReferences.add(t.getKind());
-              return true;
-            }
-          });
-          kindReferences.remove(0);
-          return kindReferences;
-        }
-        if ("shouldProtect".equals(propertyName)) {
-          return TypeAnswers.shouldProtect((Type) o);
-        }
-        if (propertyName.startsWith("isKind")) {
-          String kindName = propertyName.substring("isKind".length());
-          Kind kind = Kind.valueOf(kindName.toUpperCase());
-          return kind.equals(((Type) o).getKind());
-        }
-        return super.getProperty(interp, self, o, property, propertyName);
-      }
-    });
-  }
-
-  @Override
-  public void generate(Options options, Dialect.Collector output, Schema s) throws IOException {
-    Date now = new Date();
-    ST intfTemplate = getTemplate("modelInterface", options, now);
-    ST implTemplate = getTemplate("implementation", options, now);
-    ST enumTemplate = getTemplate("enumType", options, now);
-    for (Model model : s.getModels().values()) {
-      for (ST template : Arrays.asList(intfTemplate, implTemplate, enumTemplate)) {
-        template.remove("dialectProperties");
-        Map<String, Map<String, String>> dialectProperties = model.getDialectProperties();
-        if (dialectProperties != null) {
-          template.add("dialectProperties", dialectProperties.get(getName()));
-        }
-
-        template.remove("model");
-        template.add("model", model);
-      }
-      if (model.getEnumValues() != null) {
-        Writer impl = output.writeJavaSource(options.getPackageName(), model.getName());
-        enumTemplate.write(new AutoIndentWriter(impl));
-        impl.close();
-        continue;
-      }
-
-      Writer intf = output.writeJavaSource(options.getPackageName(), model.getName());
-      renderTemplate(intfTemplate, intf);
-
-      Writer impl = output.writeJavaSource(options.getPackageName(), model.getName() + "Impl");
-      renderTemplate(implTemplate, impl);
-    }
-
-    writePackageVisitor(options, s, output, now);
-  }
-
   @Override
   public String getName() {
     return "industrial";
   }
 
-  private ST getTemplate(String name, Options options, Date now) {
-    return templates.getInstanceOf(name)
-        .add("now", new SimpleDateFormat(GENERATED_DATE_FORMAT).format(now))
-        .add("options", options);
+  @Override
+  protected void doGenerate(Options options, Dialect.Collector output, Schema s) throws IOException {
+    ST intfTemplate = getTemplate("modelInterface", options);
+    ST implTemplate = getTemplate("implementation", options);
+    ST enumTemplate = getTemplate("enumType", options);
+    for (Model model : s.getModels().values()) {
+      if (model.getEnumValues() != null) {
+        Writer impl = output.writeJavaSource(options.getPackageName(), model.getName());
+        renderTemplate(forModel(enumTemplate, model), impl);
+        continue;
+      }
+
+      Writer intf = output.writeJavaSource(options.getPackageName(), model.getName());
+      renderTemplate(forModel(intfTemplate, model), intf);
+
+      Writer impl = output.writeJavaSource(options.getPackageName(), model.getName() + "Impl");
+      renderTemplate(forModel(implTemplate, model), impl);
+    }
+
+    writePackageVisitor(options, s, output);
   }
 
-  /**
-   * Render the fully-initialized template into the given Writer. The Writer will be closed by this
-   * method.
-   */
-  private void renderTemplate(ST template, Writer out) throws IOException {
-    AutoIndentWriter intfWriter = new AutoIndentWriter(out);
-    intfWriter.setLineWidth(80);
-    template.write(intfWriter);
-    out.close();
+  @Override
+  protected List<Class<?>> getTemplateClasses() {
+    return WELL_KNOWN_CLASSES;
+  }
+
+  @Override
+  protected STGroup loadTemplates() {
+    return new STGroupFile(IndustrialDialect.class.getResource("industrial.stg"),
+        "UTF8", '<', '>');
   }
 
   /**
    * Create a convenience base type that pre-defines all method signatures that a visitor for models
    * in the package would want to define.
    */
-  private void writePackageVisitor(Options options, Schema schema, Collector collector,
-      final Date now) throws IOException {
+  private void writePackageVisitor(Options options, Schema schema, Collector collector)
+      throws IOException {
     final String packageName = options.getPackageName();
     StringBuilder visitorName = new StringBuilder(packageName.substring(packageName
         .lastIndexOf('.') + 1)).append("Visitor");
     visitorName.setCharAt(0, Character.toUpperCase(visitorName.charAt(0)));
 
-    ST template = getTemplate("packageVisitor", options, now);
+    ST template = getTemplate("packageVisitor", options);
     template.add("schema", schema);
     template.add("visitorName", visitorName);
 

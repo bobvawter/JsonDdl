@@ -22,13 +22,16 @@ import org.jsonddl.model.Schema;
 
 import com.google.gson.Gson;
 
+/**
+ * This dialect simply converts a {@link Schema} to its normalized JSON format.
+ */
 public class NormalizedDialect implements Dialect {
 
   @Override
   public void generate(Options options, Collector output, Schema s) throws IOException {
-    OutputStream out = output.writeResource(options.getPackageName().replace('.', '/')
-      + "/schema.js");
-    out.write(new Gson().toJson(s).getBytes("UTF8"));
+    OutputStream out = output.writeResource(
+        options.getPackageName().replace('.', '/') + "/schema.js");
+    out.write(new Gson().toJson(s).getBytes(Collector.SOURCE_CHARSET));
     out.close();
   }
 
