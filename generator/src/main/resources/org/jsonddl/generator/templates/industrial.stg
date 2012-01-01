@@ -11,11 +11,14 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
+import "common.stg"
+
 // The main template for a model type's interface. Contains the Builder, too.
 modelInterface(model, options, dialectProperties) ::= <<
 package <options.packageName>;
 <model.comment>
-<generated()>
+<generated(names)>
 public interface <model.name>
     extends <names.JsonDdlObject>\<<model.name>\>
     <if(dialectProperties.implements)>, <dialectProperties.implements><endif> {
@@ -28,13 +31,13 @@ public interface <model.name>
 
 interfaceGetter(property) ::= <<
 <property.comment>
-<property.type> get<property.getterName>();
+<property.type> <getterName(property)>();
 >>
 
 // The main template for a model type's implementation.
 implementation(model, options, dialectProperties) ::= <<
 package <options.packageName>;
-<generated()>
+<generated(names)>
 class <model.name>Impl
     <if(dialectProperties.extends)>extends <dialectProperties.extends><endif>
     implements <names.Traversable>\<<model.name>\>, <names.Digested>, <model.name> {
@@ -71,7 +74,7 @@ class <model.name>Impl
 implementationField(property) ::= "<property.type> <property.getterName>;"
 
 implementationGetter(property) ::= <<
-public <property.type> get<property.getterName>() {
+public <property.type> <getterName(property)>() {
   return <property.getterName>;
 }
 >>
@@ -80,7 +83,7 @@ public <property.type> get<property.getterName>() {
 enumType(model, options, dialectProperties) ::= <<
 package <options.packageName>;
 <model.comment>
-<generated()>
+<generated(names)>
 public enum <model.name> {
   <model.enumValues:{value|<value.comment><value.name>}; separator=", ", wrap, anchor>;
 }
@@ -92,7 +95,7 @@ builder() ::= <<
  * Constructs instances of {@link <model.name>}. Instances of Builder should not be
  * reused after calling {@link #build()}.
  */
-<generated()>
+<generated(names)>
 public static class Builder
     <if(dialectProperties.extends)>extends <dialectProperties.extends><endif>
     implements <names.Builder>\<<model.name>\>,  <names.Traversable>\<<model.name>\>, <names.Digested>, <model.name> {
@@ -121,7 +124,7 @@ public static class Builder
     return this;
   }
   public <model.name>.Builder from(<model.name> copyFrom) {
-    <model.properties:{property|with<property.getterName>(copyFrom.get<property.getterName>());}; separator="\n">
+    <model.properties:{property|with<property.getterName>(copyFrom.<getterName(property)>());}; separator="\n">
     return this;
   }
   public <model.name>.Builder from(<names.Map>\<String, Object\> map) {
@@ -177,13 +180,13 @@ public <model.name>.Builder add<property.getterName>(<property.type.listElement>
 // Returns DDL objects as Builder instances, other types as-is
 builderGetter(property) ::= <<
 <if(property.type.isKindDDL)>
-public <property.type>.Builder get<property.getterName>() {
+public <property.type>.Builder <getterName(property)>() {
   <property.type>.Builder toReturn = obj.<property.getterName>.builder();
   obj.<property.getterName> = toReturn;
   return toReturn;
 }
 <else>
-public <property.type> get<property.getterName>() {
+public <property.type> <getterName(property)>() {
   return obj.<property.getterName>;
 }
 <endif>
@@ -346,7 +349,7 @@ package <options.packageName>;
  * A convenience base type that defines visitation methods for all model types in the
  * {@code <options.packageName>} package.
  */
-<generated()>
+<generated(names)>
 public class <visitorName> implements <names.JsonDdlVisitor> {
   <schema.models.values:endVisit(); separator="\n">
   <schema.models.values:visit(); separator="\n">
@@ -374,8 +377,6 @@ public void endVisit(<model.name> x, <names.Context>\<<model.name>\> ctx) throws
   defaultEndVisit(x, ctx);
 }<endif>
 >>
-
-generated() ::= "@<names.Generated>(value=\"<names.IndustrialDialect>\", date=\"<now()>\")"
 
 visit(model) ::= <<
 <if(!model.enumValues)>/**

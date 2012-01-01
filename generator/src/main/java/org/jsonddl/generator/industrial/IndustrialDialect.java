@@ -44,8 +44,6 @@ import org.jsonddl.model.Kind;
 import org.jsonddl.model.Model;
 import org.jsonddl.model.Schema;
 import org.stringtemplate.v4.ST;
-import org.stringtemplate.v4.STGroup;
-import org.stringtemplate.v4.STGroupFile;
 
 public class IndustrialDialect extends TemplateDialect {
 
@@ -101,12 +99,6 @@ public class IndustrialDialect extends TemplateDialect {
   @Override
   protected List<Class<?>> getTemplateClasses() {
     return WELL_KNOWN_CLASSES;
-  }
-
-  @Override
-  protected STGroup loadTemplates() {
-    return new STGroupFile(IndustrialDialect.class.getResource("industrial.stg"),
-        "UTF8", '<', '>');
   }
 
   /**

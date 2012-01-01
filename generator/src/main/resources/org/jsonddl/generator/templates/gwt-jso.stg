@@ -1,0 +1,103 @@
+/*
+ * Copyright 2012 Robert W. Vawter III <bob@vawter.org>
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+import "common.stg"
+
+modelObject(model, options, dialectProperties) ::= <<
+package <options.packageName>;
+<model.comment>
+<generated(names)>
+public class <model.name> extends <names.JavaScriptObject> {
+  protected <model.name>() {}
+  <model.properties:getter(); separator="\n">
+  <model.properties:setter(); separator="\n">
+}
+>>
+
+/**
+ * Returns the Java type declaration to use for a given model Type.
+ */
+nativeType(type) ::= <%
+<if(type.isKindBoolean)>
+  <names.boolean>
+<elseif(type.isKindDouble)>
+  <names.double>
+<elseif(type.isKindInteger)>
+  <names.int>
+<elseif(type.isKindString)>
+  <names.String>
+<elseif(type.isKindDdl || type.isKindExternal || type.isKindEnum)>
+  <type.name>
+<elseif(type.isKindList)>
+  <if(type.listElement.isKindBoolean)>
+    <names.JsArrayBoolean>
+  <elseif(type.listElement.isKindDouble)>
+    <names.JsArrayNumber>
+  <elseif(type.listElement.isKindInteger)>
+    <names.JsArrayInteger>
+  <elseif(type.listElement.isKindString)>
+    <names.JsArrayString>
+  <else>
+    <names.JsArray>\<<nativeType(type.listElement)>>
+  <endif>
+<elseif(type.isKindMap)>
+  <names.MapIsh>\<<nativeType(type.mapValue)>>
+<else>
+  XXX Unsupported Type <type>
+<endif>
+%>
+
+getter(property) ::= <<
+<property.comment>
+public native final <nativeType(property.type)> <getterName(property)>() /*-{
+  return <nativeGetExpression(property)>;
+}-*/;
+>>
+
+nativeGetExpression(property) ::= <%
+<if(property.type.isKindBoolean)>
+  !!this['<property.name>']
+<elseif(property.type.isKindDouble || property.type.isKindInteger)>
+  this.hasOwnProperty('<property.name>') ? Number(this['<property.name>']) : 0
+<elseif(property.type.isKindEnum)>
+  this['<property.name>'] && @<options.packageName>.<property.type>::valueOf(Ljava/lang/String;)(this['<property.name>'])
+<else>
+  this['<property.name>']
+<endif>
+%>
+
+setter(property) ::= <<
+<property.comment>
+public final native void set<property.getterName>(<nativeType(property.type)> value) /*-{
+  this['<property.name>'] = <nativeSetExpression(property, "value")>;
+}-*/;
+>>
+
+nativeSetExpression(property, variable) ::= <%
+<if(property.type.isKindEnum)>
+  <variable>.@<names.Enum>::name()
+<else>
+  <variable>
+<endif>
+%>
+
+// The main template for an enumerated value
+enumType(model, options, dialectProperties) ::= <<
+package <options.packageName>;
+<model.comment>
+<generated(names)>
+public enum <model.name> {
+  <model.enumValues:{value|<value.comment><value.name>}; separator=", ", wrap, anchor>;
+}
+>>

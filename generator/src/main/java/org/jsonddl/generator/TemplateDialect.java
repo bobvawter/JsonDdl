@@ -17,6 +17,7 @@ import static org.jsonddl.generator.industrial.IndustrialDialect.getterName;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +39,7 @@ import org.stringtemplate.v4.AutoIndentWriter;
 import org.stringtemplate.v4.Interpreter;
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
+import org.stringtemplate.v4.STGroupFile;
 import org.stringtemplate.v4.misc.ObjectModelAdaptor;
 import org.stringtemplate.v4.misc.STNoSuchPropertyException;
 
@@ -62,7 +64,7 @@ public abstract class TemplateDialect implements Dialect {
 
   @Override
   public void generate(Options options, Collector output, Schema s) throws IOException {
-    templates = loadTemplates();
+    templates = loadTemplateGroup();
     // Redefine now()
     templates.undefineTemplate(NOW_TEMPLATE_NAME);
     templates.defineTemplate(NOW_TEMPLATE_NAME,
@@ -73,6 +75,15 @@ public abstract class TemplateDialect implements Dialect {
     for (Class<?> clazz : getTemplateClasses()) {
       classMap.put(clazz.getSimpleName(), clazz.getCanonicalName());
     }
+    for (String name : getTemplateClassNames()) {
+      int idx = name.lastIndexOf('.');
+      if (idx == -1) {
+        classMap.put(name, name);
+      } else {
+        classMap.put(name.substring(idx + 1), name);
+      }
+    }
+    classMap.put(Dialect.class.getCanonicalName(), getClass().getCanonicalName());
     templates.defineDictionary(NAMES_DICTIONARY_NAME, classMap);
 
     // Stringifies a Type as its parameterized, qualified source name
@@ -181,10 +192,28 @@ public abstract class TemplateDialect implements Dialect {
   }
 
   /**
-   * Subclasses must implement this method to return an initialized STGroup that
-   * {@link #getTemplate} will operate on.
+   * Similar to {@link #getTemplateClasses()}, but uses string values to avoid generator
+   * dependencies on external toolkits.
    */
-  protected abstract STGroup loadTemplates();
+  protected List<String> getTemplateClassNames() {
+    return Collections.emptyList();
+  }
+
+  protected STGroup getTemplateGroup() {
+    return templates;
+  }
+
+  /**
+   * Loads a template group based on dialect name.
+   */
+  protected STGroup loadTemplateGroup() {
+    String location = "org/jsonddl/generator/templates/" + getName() + ".stg";
+    URL resource = Thread.currentThread().getContextClassLoader().getResource(location);
+    if (resource == null) {
+      throw new RuntimeException("Could not locate template at " + location);
+    }
+    return new STGroupFile(resource, "UTF8", '<', '>');
+  }
 
   /**
    * Render the fully-initialized template into the given Writer. The line width will be set to
