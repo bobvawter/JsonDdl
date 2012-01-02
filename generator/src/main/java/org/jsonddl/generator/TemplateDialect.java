@@ -83,7 +83,7 @@ public abstract class TemplateDialect implements Dialect {
         classMap.put(name.substring(idx + 1), name);
       }
     }
-    classMap.put(Dialect.class.getCanonicalName(), getClass().getCanonicalName());
+    classMap.put(Dialect.class.getSimpleName(), getClass().getCanonicalName());
     templates.defineDictionary(NAMES_DICTIONARY_NAME, classMap);
 
     // Stringifies a Type as its parameterized, qualified source name
