@@ -210,6 +210,10 @@ public abstract class TemplateDialect implements Dialect {
     String location = "org/jsonddl/generator/templates/" + getName() + ".stg";
     URL resource = Thread.currentThread().getContextClassLoader().getResource(location);
     if (resource == null) {
+      // Try this class's classloader, using an absolute resource path
+      resource = getClass().getResource("/" + location);
+    }
+    if (resource == null) {
       throw new RuntimeException("Could not locate template at " + location);
     }
     return new STGroupFile(resource, "UTF8", '<', '>');

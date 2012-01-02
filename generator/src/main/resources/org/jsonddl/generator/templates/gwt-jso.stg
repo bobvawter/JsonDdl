@@ -54,7 +54,7 @@ nativeType(type) ::= <%
 <elseif(type.isKindMap)>
   <names.MapIsh>\<<nativeType(type.mapValue)>>
 <else>
-  XXX Unsupported Type <type>
+  XXX /*Unsupported Type <type>*/
 <endif>
 %>
 

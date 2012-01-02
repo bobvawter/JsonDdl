@@ -14,21 +14,15 @@
 
 package org.jsonddl.generator.gwt;
 
-import java.io.IOException;
-import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
 
-import org.jsonddl.generator.Options;
-import org.jsonddl.generator.TemplateDialect;
-import org.jsonddl.model.Model;
-import org.jsonddl.model.Schema;
-import org.stringtemplate.v4.ST;
+import org.jsonddl.generator.pojo.PojoDialect;
 
 /**
  * Creates simple JSO-based accessors for GWT.
  */
-public class GwtJsoDialect extends TemplateDialect {
+public class GwtJsoDialect extends PojoDialect {
   private static final String ARRAY_BOOLEAN_NAME = "com.google.gwt.core.client.JsArrayBoolean";
   private static final String ARRAY_INTEGER_NAME = "com.google.gwt.core.client.JsArrayInteger";
   private static final String ARRAY_JSO_NAME = "com.google.gwt.core.client.JsArray";
@@ -46,17 +40,6 @@ public class GwtJsoDialect extends TemplateDialect {
   @Override
   public String getName() {
     return "gwt-jso";
-  }
-
-  @Override
-  protected void doGenerate(Options options, Collector output, Schema s) throws IOException {
-    ST enumTemplate = getTemplate("enumType", options);
-    ST modelTemplate = getTemplate("modelObject", options);
-    for (Model model : s.getModels().values()) {
-      ST template = model.getEnumValues() == null ? modelTemplate : enumTemplate;
-      Writer intf = output.writeJavaSource(options.getPackageName(), model.getName());
-      renderTemplate(forModel(template, model), intf);
-    }
   }
 
   @Override
