@@ -92,7 +92,7 @@ public class Generator {
   public boolean generate(InputStream schema, Options options, Dialect.Collector output)
       throws IOException {
     Schema s;
-    if (Boolean.TRUE.equals(options.getNormalizedInput())) {
+    if (Boolean.TRUE.equals(options.isNormalizedInput())) {
       s = parseNormalized(schema);
     } else {
       s = parseIdiomatic(options, schema, output);
