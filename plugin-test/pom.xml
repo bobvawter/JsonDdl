@@ -3,7 +3,7 @@
   <parent>
     <artifactId>parent</artifactId>
     <groupId>org.jsonddl</groupId>
-    <version>0.1.3-SNAPSHOT</version>
+    <version>0.1.3</version>
   </parent>
   <artifactId>jsonddl-maven-plugin-test</artifactId>
   <packaging>jar</packaging>
