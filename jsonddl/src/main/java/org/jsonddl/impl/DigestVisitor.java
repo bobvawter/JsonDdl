@@ -14,10 +14,6 @@
 
 package org.jsonddl.impl;
 
-import org.jsonddl.JsonDdlObject;
-import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
-import org.jsonddl.model.Kind;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
@@ -26,12 +22,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.jsonddl.JsonDdlObject;
+import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
+import org.jsonddl.model.Kind;
+
 /**
  * Computes a MessageDigest.
  */
 public class DigestVisitor implements PropertyVisitor {
   private static final char[] HEX_DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a',
-      'b', 'c', 'd', 'e', 'e' };
+      'b', 'c', 'd', 'e', 'f' };
   private static final Charset UTF8 = Charset.forName("UTF8");
   private final MessageDigest sha;
   private final ByteBuffer temp = ByteBuffer.allocate(8);
