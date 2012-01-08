@@ -76,9 +76,12 @@ public class IndustrialDialect extends TemplateDialect {
 
   @Override
   protected void doGenerate(Options options, Dialect.Collector output, Schema s) throws IOException {
+    getTemplateGroup().rawGetDictionary("names").put("packageVisitor",
+        visitorName(options.getPackageName()));
     ST intfTemplate = getTemplate("modelInterface", options);
     ST implTemplate = getTemplate("implementation", options);
     ST enumTemplate = getTemplate("enumType", options);
+    ST contextTemplate = getTemplate("modelContext", options);
     for (Model model : s.getModels().values()) {
       if (model.getEnumValues() != null) {
         Writer impl = output.writeJavaSource(options.getPackageName(), model.getName());
@@ -91,6 +94,10 @@ public class IndustrialDialect extends TemplateDialect {
 
       Writer impl = output.writeJavaSource(options.getPackageName(), model.getName() + "Impl");
       renderTemplate(forModel(implTemplate, model), impl);
+
+      Writer context = output
+          .writeJavaSource(options.getPackageName(), model.getName() + "Context");
+      renderTemplate(forModel(contextTemplate, model), context);
     }
 
     writePackageVisitor(options, s, output);
@@ -101,6 +108,13 @@ public class IndustrialDialect extends TemplateDialect {
     return WELL_KNOWN_CLASSES;
   }
 
+  private String visitorName(final String packageName) {
+    StringBuilder visitorName = new StringBuilder(packageName.substring(packageName
+        .lastIndexOf('.') + 1)).append("Visitor");
+    visitorName.setCharAt(0, Character.toUpperCase(visitorName.charAt(0)));
+    return visitorName.toString();
+  }
+
   /**
    * Create a convenience base type that pre-defines all method signatures that a visitor for models
    * in the package would want to define.
@@ -108,15 +122,12 @@ public class IndustrialDialect extends TemplateDialect {
   private void writePackageVisitor(Options options, Schema schema, Collector collector)
       throws IOException {
     final String packageName = options.getPackageName();
-    StringBuilder visitorName = new StringBuilder(packageName.substring(packageName
-        .lastIndexOf('.') + 1)).append("Visitor");
-    visitorName.setCharAt(0, Character.toUpperCase(visitorName.charAt(0)));
+    String visitorName = visitorName(packageName);
 
     ST template = getTemplate("packageVisitor", options);
     template.add("schema", schema);
-    template.add("visitorName", visitorName);
 
-    Writer out = collector.writeJavaSource(packageName, visitorName.toString());
+    Writer out = collector.writeJavaSource(packageName, visitorName);
     renderTemplate(template, out);
   }
 }

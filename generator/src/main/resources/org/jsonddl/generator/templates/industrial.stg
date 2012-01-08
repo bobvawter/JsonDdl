@@ -46,7 +46,7 @@ class <model.name>Impl
     return <model.name>.class;
   }
   public <model.name> accept(<names.JsonDdlVisitor> visitor) {
-    return new <names.ObjectContext>.Builder\<<model.name>\>()
+    return new <model.name>Context.Builder()
         .withValue(this)
         .withKind(<names.Kind>.DDL)
         .build().traverse(visitor);
@@ -107,7 +107,7 @@ public static class Builder
     this.obj = instance;
   }
   public <model.name>.Builder accept(<names.JsonDdlVisitor> visitor) {
-    obj = new <names.ObjectContext>.Builder\<<model.name>\>()
+    obj = new <model.name>Context.Builder()
         .withValue(this)
         .withKind(<names.Kind>.DDL)
         .withMutability(true)
@@ -317,19 +317,22 @@ contextBuilderDeclaration(type) ::= <%
 <elseif(type.isKindMap && type.mapValue.isKindDdl)>
   <names.MapContext>
 <elseif(type.isKindDdl)>
-  <names.ObjectContext>
+  <type>Context
 <else>
   <names.ValueContext>
 <endif>
-.Builder\<
-<if(type.isKindList && type.listElement.isKindDdl)>
-  <type.listElement>
-<elseif(type.isKindMap && type.mapValue.isKindDdl)>
-  <type.mapValue>
-<else>
-  <type>
+.Builder
+<if(!type.isKindDdl)>
+  \<
+  <if(type.isKindList && type.listElement.isKindDdl)>
+    <type.listElement>
+  <elseif(type.isKindMap && type.mapValue.isKindDdl)>
+    <type.mapValue>
+  <else>
+    <type>
+  <endif>
+  >
 <endif>
->
 %>
 
 // Extract the leaf-most type from a compound type
@@ -343,14 +346,14 @@ leafType(type) ::= <%
 %>
 
 // Build the package's convenience visitor base type
-packageVisitor(options, schema, visitorName) ::= <<
+packageVisitor(options, schema) ::= <<
 package <options.packageName>;
 /**
  * A convenience base type that defines visitation methods for all model types in the
  * {@code <options.packageName>} package.
  */
 <generated(names)>
-public class <visitorName> implements <names.JsonDdlVisitor> {
+public class <names.packageVisitor> implements <names.JsonDdlVisitor> {
   <schema.models.values:endVisit(); separator="\n">
   <schema.models.values:visit(); separator="\n">
 
@@ -385,4 +388,33 @@ visit(model) ::= <<
 public boolean visit(<model.name> x, <names.Context>\<<model.name>\> ctx) throws Exception {
   return defaultVisit(x, ctx);
 }<endif>
+>>
+
+// The main template for a model type's interface. Contains the Builder, too.
+modelContext(model, options, dialectProperties) ::= <<
+package <options.packageName>;
+class <model.name>Context extends <names.ObjectContext>\<<model.name>\> {
+  static class Builder extends <names.ObjectContext>.Builder\<<model.name>\> {
+    public Builder() {
+      super(new <model.name>Context());
+    }
+  }
+  
+  @Override
+  protected void tryEndVisit(<names.JsonDdlVisitor> visitor) throws Exception {
+    if (visitor instanceof <names.packageVisitor>) {
+      ((<names.packageVisitor>) visitor).visit(value, this);
+    } else {
+      super.tryEndVisit(visitor);
+    }
+  }
+  
+  @Override
+  protected boolean tryVisit(<names.JsonDdlVisitor> visitor) throws Exception {
+    if (visitor instanceof <names.packageVisitor>) {
+      return ((<names.packageVisitor>) visitor).visit(value, this);
+    }
+    return super.tryVisit(visitor);
+  }  
+}
 >>

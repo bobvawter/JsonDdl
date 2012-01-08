@@ -13,16 +13,16 @@
  */
 package org.jsonddl.impl;
 
-import org.jsonddl.JsonDdlObject;
-import org.jsonddl.JsonDdlVisitor;
-import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
-import org.jsonddl.model.Kind;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.jsonddl.JsonDdlObject;
+import org.jsonddl.JsonDdlVisitor;
+import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
+import org.jsonddl.model.Kind;
 
 /**
  * Internal class used to construct the return type of {@link JsonDdlObject#toJsonObject()} and
@@ -97,13 +97,16 @@ public class JsonMapVisitor {
 
       Class<?> builderClass = builders.get(leafType);
       if (builderClass == null) {
-        for (Class<?> clazz : leafType.getDeclaredClasses()) {
-          if (JsonDdlObject.Builder.class.isAssignableFrom(clazz)) {
-            builderClass = clazz;
-            builders.put(leafType, builderClass);
-            break;
-          }
+        try {
+          builderClass = Class.forName(leafType.getName() + "$Builder", false,
+              leafType.getClassLoader());
+        } catch (ClassNotFoundException e) {
+          // Unexpected, would indicate an error in the code generator
+          throw new RuntimeException("Could not find builder class for "
+            + leafType.getCanonicalName());
         }
+        assert JsonDdlObject.Builder.class.isAssignableFrom(builderClass);
+        builders.put(leafType, builderClass);
       }
 
       if (builderClass == null) {

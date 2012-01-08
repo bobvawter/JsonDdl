@@ -13,12 +13,6 @@
  */
 package org.jsonddl.impl;
 
-import org.jsonddl.JsonDdlObject;
-import org.jsonddl.JsonDdlVisitor;
-import org.jsonddl.JsonDdlVisitor.Context;
-import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
-import org.jsonddl.model.Kind;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -26,6 +20,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+
+import org.jsonddl.JsonDdlObject;
+import org.jsonddl.JsonDdlVisitor;
+import org.jsonddl.JsonDdlVisitor.Context;
+import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
+import org.jsonddl.model.Kind;
 
 public abstract class ContextImpl<J> implements Context<J> {
   public static class Builder<C extends PropertyContext<?, V>, V> {
@@ -142,7 +142,10 @@ public abstract class ContextImpl<J> implements Context<J> {
       it = value.listIterator();
       while (it.hasNext()) {
         reset();
-        J temp = configureNestedBuilderKinds(new ObjectContext.Builder<J>())
+        @SuppressWarnings("unchecked")
+        ObjectContext.Builder<J> builder = VisitSupport
+            .objectContextBuilder((Class<J>) getLeafType());
+        J temp = configureNestedBuilderKinds(builder)
             .withEnclosing(this)
             .withValue(it.next())
             .build().traverse(visitor);
@@ -227,7 +230,10 @@ public abstract class ContextImpl<J> implements Context<J> {
       it = value.entrySet().iterator();
       while (it.hasNext()) {
         currentEntry = it.next();
-        J value = configureNestedBuilderKinds(new ObjectContext.Builder<J>())
+        @SuppressWarnings("unchecked")
+        ObjectContext.Builder<J> builder = VisitSupport
+            .objectContextBuilder((Class<J>) getLeafType());
+        J value = configureNestedBuilderKinds(builder)
             .withEnclosing(this)
             .withValue(currentEntry.getValue())
             .build().traverse(visitor);
@@ -245,8 +251,13 @@ public abstract class ContextImpl<J> implements Context<J> {
       ValueContext<J> {
     public static class Builder<J extends JsonDdlObject<J>> extends
         ValueContext.Builder<J> {
+
       public Builder() {
         super(new ObjectContext<J>());
+      }
+
+      protected Builder(ObjectContext<J> impl) {
+        super(impl);
       }
 
       public Builder<J> withEnclosing(ContextImpl<J> delegate) {
@@ -255,22 +266,35 @@ public abstract class ContextImpl<J> implements Context<J> {
       }
     }
 
-    ObjectContext() {}
+    protected ObjectContext() {}
 
     @Override
     protected void doTraverse(JsonDdlVisitor visitor) {
-      if (VisitSupport.visit(visitor, value, this)) {
-        if (isMutable()) {
-          @SuppressWarnings("unchecked")
-          J temp = ((Traversable<J>) value.builder()).traverse(visitor);
-          if (!didChange) {
-            value = temp;
+      try {
+        if (tryVisit(visitor)) {
+          if (isMutable()) {
+            @SuppressWarnings("unchecked")
+            J temp = ((Traversable<J>) value.builder()).traverse(visitor);
+            if (!didChange) {
+              value = temp;
+            }
+          } else {
+            ((Traversable<J>) value).traverse(visitor);
           }
-        } else {
-          ((Traversable<J>) value).traverse(visitor);
         }
+        tryEndVisit(visitor);
+      } catch (Exception e) {
+        // XXX Better error handling
+        throw new RuntimeException(e);
       }
+    }
+
+    protected void tryEndVisit(JsonDdlVisitor visitor) throws Exception {
       VisitSupport.endVisit(visitor, value, this);
+    }
+
+    protected boolean tryVisit(JsonDdlVisitor visitor) throws Exception {
+      return VisitSupport.visit(visitor, value, this);
     }
   }
 

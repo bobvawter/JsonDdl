@@ -13,14 +13,16 @@
  */
 package org.jsonddl.impl;
 
-import org.jsonddl.JsonDdlObject;
-import org.jsonddl.JsonDdlVisitor;
-import org.jsonddl.JsonDdlVisitor.Context;
-
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.jsonddl.JsonDdlObject;
+import org.jsonddl.JsonDdlVisitor;
+import org.jsonddl.JsonDdlVisitor.Context;
+import org.jsonddl.impl.ContextImpl.ObjectContext;
 
 /**
  * Provides runtime support for dynamic visitor methods. This type should not be referenced except
@@ -86,6 +88,40 @@ public class VisitSupport {
       Context<J> ctx) {
     Object o = invoke(visitor, obj, ctx, "visit");
     return !Boolean.FALSE.equals(o);
+  }
+
+  /**
+   * Create an instance of the type-specific ObjectContext for a generated model type.
+   */
+  static <B extends JsonDdlObject<B>> ObjectContext.Builder<B> objectContextBuilder(Class<B> toBuild) {
+    Throwable ex;
+    try {
+      Class<?> builder = Class.forName(toBuild.getName() + "Context$Builder", false,
+          toBuild.getClassLoader());
+      Constructor<?> constructor = builder.getConstructor();
+      constructor.setAccessible(true);
+      @SuppressWarnings("unchecked")
+      ObjectContext.Builder<B> newInstance = (ObjectContext.Builder<B>) constructor.newInstance();
+      return newInstance;
+    } catch (ClassNotFoundException e) {
+      // Unexpected, just fall back to purely dynamic implementation
+      return new ObjectContext.Builder<B>();
+    } catch (InvocationTargetException e) {
+      // Report causal exception
+      ex = e.getCause();
+    } catch (InstantiationException e) {
+      ex = e;
+    } catch (IllegalAccessException e) {
+      ex = e;
+    } catch (IllegalArgumentException e) {
+      ex = e;
+    } catch (SecurityException e) {
+      ex = e;
+    } catch (NoSuchMethodException e) {
+      ex = e;
+    }
+    throw new RuntimeException("Unable to locate ObjectContext for "
+      + toBuild.getCanonicalName(), ex);
   }
 
   private static Method findMethod(Class<?> visitor, String name, Class<?> searchFor) {
