@@ -14,8 +14,6 @@
 
 package org.jsonddl.impl;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -32,13 +30,11 @@ import org.jsonddl.model.Kind;
 public class DigestVisitor implements PropertyVisitor {
   private static final char[] HEX_DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a',
       'b', 'c', 'd', 'e', 'f' };
-  private static final Charset UTF8 = Charset.forName("UTF8");
   private final MessageDigest sha;
-  private final ByteBuffer temp = ByteBuffer.allocate(8);
 
   public DigestVisitor() {
     try {
-      sha = MessageDigest.getInstance("SHA1");
+      sha = MessageDigest.getInstance("MD5");
     } catch (NoSuchAlgorithmException e) {
       throw new RuntimeException("SHA1 unsupported", e);
     }
@@ -49,7 +45,7 @@ public class DigestVisitor implements PropertyVisitor {
   }
 
   public void endVisit(JsonDdlObject<?> x) {
-    sha.update(x.getDdlObjectType().getName().getBytes(UTF8));
+    sha.update(VisitSupport.getBytes(x.getDdlObjectType().getName()));
   }
 
   @Override
@@ -85,19 +81,15 @@ public class DigestVisitor implements PropertyVisitor {
   }
 
   private void update(double d) {
-    temp.rewind();
-    temp.putDouble(d);
-    temp.rewind();
-    temp.limit(8);
-    sha.update(temp);
+    // XXX This is a total hack and should be replaced
+    update(Double.toString(d));
   }
 
-  private void update(int i) {
-    temp.rewind();
-    temp.putInt(i);
-    temp.rewind();
-    temp.limit(4);
-    sha.update(temp);
+  private void update(int value) {
+    for (int i = 0; i < 4; i++) {
+      sha.update((byte) (value & 0xFF));
+      value >>>= 1;
+    }
   }
 
   private void update(Object value, Kind kind, List<Kind> nestedKinds) {
@@ -164,6 +156,6 @@ public class DigestVisitor implements PropertyVisitor {
   }
 
   private void update(String s) {
-    sha.update(s.getBytes(UTF8));
+    sha.update(VisitSupport.getBytes(s));
   }
 }

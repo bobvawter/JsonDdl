@@ -259,7 +259,7 @@ public byte[] computeDigest() {
 
 public int hashCode() {
   <if(!immutable)>byte[] digest = <endif>computeDigest();
-  return (int)((digest[0] \<\< 3) | (digest[1] \<\< 2) | (digest[18] \<\< 1) | digest[19]);
+  return (int)((digest[0] \<\< 3) | (digest[1] \<\< 2) | (digest[2] \<\< 1) | digest[3]);
 }
 
 public boolean equals(Object o) {

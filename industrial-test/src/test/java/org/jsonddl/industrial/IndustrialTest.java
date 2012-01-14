@@ -13,10 +13,10 @@
  */
 package org.jsonddl.industrial;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -138,7 +138,7 @@ public class IndustrialTest {
   }
 
   private void checkInequality(Object o1, Object o2) {
-    // Not pedentically correct, but
+    // Not pedantically correct, but
     assertTrue(o1.hashCode() != o2.hashCode());
     assertFalse(o1.equals(o2));
     assertFalse(o2.equals(o1));

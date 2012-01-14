@@ -14,6 +14,7 @@
   </parent>
   <modules>
     <module>generator</module>
+    <module>gwt-industrial</module>
     <module>gwt-jso</module>
     <module>industrial-test</module>
     <module>jsonddl</module>

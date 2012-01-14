@@ -1,0 +1,1 @@
+../../../../industrial-test/src/test/jsonddl/org.jsonddl.industrial.js

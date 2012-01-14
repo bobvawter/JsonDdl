@@ -103,7 +103,7 @@ public abstract class ContextImpl<J> implements Context<J> {
     @Override
     public void insertAfter(J next) {
       if (isMutable()) {
-        getLeafType().cast(next);
+        VisitSupport.cast(next, getLeafType());
         toInsertAfter.add(0, next);
       } else {
         super.insertAfter(next);
@@ -113,7 +113,7 @@ public abstract class ContextImpl<J> implements Context<J> {
     @Override
     public void insertBefore(J previous) {
       if (isMutable()) {
-        getLeafType().cast(previous);
+        VisitSupport.cast(previous, getLeafType());
         toInsertBefore.add(previous);
       } else {
         super.insertBefore(previous);
@@ -356,7 +356,7 @@ public abstract class ContextImpl<J> implements Context<J> {
           default:
             throw new RuntimeException("Unhandled kind " + getKind());
         }
-        check.cast(replacement);
+        VisitSupport.cast(replacement, check);
         didChange = true;
         value = replacement;
       } else {

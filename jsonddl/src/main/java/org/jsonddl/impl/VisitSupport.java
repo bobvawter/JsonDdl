@@ -16,6 +16,7 @@ package org.jsonddl.impl;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -79,6 +80,10 @@ public class VisitSupport {
     }
   }
 
+  private static final Map<Class<?>, Class<?>> builders = new ConcurrentHashMap<Class<?>, Class<?>>();
+
+  private static final Charset UTF8 = Charset.forName("UTF8");
+
   public static <J extends JsonDdlObject<J>> void endVisit(JsonDdlVisitor visitor, J obj,
       Context<J> ctx) {
     invoke(visitor, obj, ctx, "endVisit");
@@ -88,6 +93,53 @@ public class VisitSupport {
       Context<J> ctx) {
     Object o = invoke(visitor, obj, ctx, "visit");
     return !Boolean.FALSE.equals(o);
+  }
+
+  static <T> Class<? extends T> asSubclass(Class<?> base, Class<T> desired) {
+    return base.asSubclass(desired);
+  }
+
+  static <T> T cast(Object object, Class<T> to) {
+    return to.cast(object);
+  }
+
+  static JsonDdlObject.Builder<?> create(Class<?> leafType) {
+    assert JsonDdlObject.class.isAssignableFrom(leafType);
+
+    Class<?> builderClass = builders.get(leafType);
+    if (builderClass == null) {
+      try {
+        builderClass = Class.forName(leafType.getName() + "$Builder", false,
+            leafType.getClassLoader());
+      } catch (ClassNotFoundException e) {
+        // Unexpected, would indicate an error in the code generator
+        throw new RuntimeException("Could not find builder class for "
+          + leafType.getCanonicalName());
+      }
+      assert JsonDdlObject.Builder.class.isAssignableFrom(builderClass);
+      builders.put(leafType, builderClass);
+    }
+
+    if (builderClass == null) {
+      throw new RuntimeException("Could not find Builder for type " + leafType.getName());
+    }
+
+    JsonDdlObject.Builder<?> builder;
+    try {
+      builder = builderClass.asSubclass(JsonDdlObject.Builder.class).newInstance();
+    } catch (InstantiationException e) {
+      // Should never happen since these are code-gen types
+      throw new RuntimeException(e);
+    } catch (IllegalAccessException e) {
+      // Should never happen since these are code-gen types
+      throw new RuntimeException(e);
+    }
+    return builder;
+  }
+
+  static byte[] getBytes(String string) {
+    return string.getBytes(UTF8);
+
   }
 
   /**
