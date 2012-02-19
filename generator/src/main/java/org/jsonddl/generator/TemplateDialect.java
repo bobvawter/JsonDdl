@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -63,7 +64,7 @@ public abstract class TemplateDialect implements Dialect {
   private STGroup templates;
 
   @Override
-  public void generate(Options options, Collector output, Schema s) throws IOException {
+  public void generate(Options options, Collector output, final Schema s) throws IOException {
     templates = loadTemplateGroup();
     // Redefine now()
     templates.undefineTemplate(NOW_TEMPLATE_NAME);
@@ -91,6 +92,28 @@ public abstract class TemplateDialect implements Dialect {
       @Override
       public String toString(Object o, String formatString, Locale locale) {
         return TypeAnswers.getParameterizedQualifiedSourceName((Type) o);
+      }
+    });
+
+    templates.registerModelAdaptor(Model.class, new ObjectModelAdaptor() {
+      @Override
+      public Object getProperty(Interpreter interp, ST self, Object o, Object property,
+          String propertyName) throws STNoSuchPropertyException {
+        if ("referencedModels".equals(propertyName)) {
+          final Set<Model> referencedModels = new LinkedHashSet<Model>();
+          ((Model) o).accept(new ModelVisitor() {
+            @Override
+            public void endVisit(Type x, Context<Type> ctx) throws Exception {
+              if (Kind.DDL.equals(x.getKind())) {
+                referencedModels.add(s.getModels().get(x.getName()));
+              }
+            }
+          });
+          // A type shouldn't reference itself
+          referencedModels.remove(o);
+          return referencedModels;
+        }
+        return super.getProperty(interp, self, o, property, propertyName);
       }
     });
 

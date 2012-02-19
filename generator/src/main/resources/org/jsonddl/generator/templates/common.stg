@@ -18,6 +18,14 @@
  */
 comment() ::= "// "
 
+packaged(name) ::= <%
+<if(options.packageName)>
+  <options.packageName>.<name>
+<else>
+  <name>
+<endif>
+%>
+
 /**
  * Produces a Generated annotation or comment.
  */

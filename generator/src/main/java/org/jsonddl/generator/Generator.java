@@ -24,6 +24,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -55,9 +56,18 @@ import com.google.gson.Gson;
 public class Generator {
   public static void main(String[] args) throws IOException {
     final File outputRoot = new File(args[2]);
+
+    Map<String, String> extraOptions = new HashMap<String, String>();
+    for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+      String key = entry.getKey().toString();
+      String value = entry.getValue().toString();
+      extraOptions.put(key, value);
+    }
+
     Options options = new Options.Builder()
         .withPackageName(args[1])
         .withDialects(Collections.singletonList(args[3]))
+        .withExtraOptions(extraOptions)
         .build();
     new Generator().generate(new FileInputStream(new File(args[0])), options,
         new Dialect.Collector() {
@@ -154,6 +164,24 @@ public class Generator {
           .withComment(prop.getLeft().getJsDoc())
           .withName(extractName(prop));
 
+      Map<String, Map<String, String>> dialectProperties = new TreeMap<String, Map<String, String>>();
+      // Copy global properties into dialectProperties map
+      if (options.getExtraOptions() != null) {
+        for (Map.Entry<String, String> entry : options.getExtraOptions().entrySet()) {
+          String key = entry.getKey();
+          int idx = key.indexOf(':');
+          if (idx != -1) {
+            String dialect = key.substring(0, idx);
+            Map<String, String> map = dialectProperties.get(dialect);
+            if (map == null) {
+              map = new TreeMap<String, String>();
+              dialectProperties.put(dialect, map);
+            }
+            map.put(key.substring(idx + 1), entry.getValue());
+          }
+        }
+      }
+
       ArrayLiteral enumDeclarations = castOrNull(ArrayLiteral.class, prop.getRight());
       ObjectLiteral propertyDeclarations = castOrNull(ObjectLiteral.class, prop.getRight());
 
@@ -171,7 +199,6 @@ public class Generator {
         }
         builder.withEnumValues(enumValues);
       } else if (propertyDeclarations != null) {
-        Map<String, Map<String, String>> dialectProperties = new TreeMap<String, Map<String, String>>();
         List<Property> properties = new ArrayList<Property>();
         for (ObjectProperty propertyDeclaration : propertyDeclarations.getElements()) {
           String name = extractName(propertyDeclaration);
@@ -190,11 +217,12 @@ public class Generator {
             properties.add(extractProperty(propertyDeclaration));
           }
         }
-        builder.withDialectProperties(dialectProperties).withProperties(properties);
+        builder.withProperties(properties);
       } else {
         throw new UnexpectedNodeException(prop.getRight(),
             "Expecting property declaration object or enum declaration array");
       }
+      builder.withDialectProperties(dialectProperties);
       models.put(extractName(prop), builder.build());
     }
     Schema s = schemaBuilder.withModels(models).accept(new DdlTypeReplacer()).build();

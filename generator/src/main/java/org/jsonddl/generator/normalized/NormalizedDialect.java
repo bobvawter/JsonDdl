@@ -31,7 +31,7 @@ public class NormalizedDialect implements Dialect {
   public void generate(Options options, Collector output, Schema s) throws IOException {
     OutputStream out = output.writeResource(
         options.getPackageName().replace('.', '/') + "/schema.js");
-    out.write(new Gson().toJson(s).getBytes(Collector.SOURCE_CHARSET));
+    out.write(new Gson().toJson(s.toJsonObject()).getBytes(Collector.SOURCE_CHARSET));
     out.close();
   }
 

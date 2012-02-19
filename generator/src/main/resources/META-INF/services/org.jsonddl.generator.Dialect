@@ -1,3 +1,4 @@
+org.jsonddl.generator.backbone.BackboneDialect
 org.jsonddl.generator.gwt.GwtJsoDialect
 org.jsonddl.generator.idiomatic.IdiomaticDialect
 org.jsonddl.generator.industrial.IndustrialDialect
