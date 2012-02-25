@@ -100,7 +100,7 @@ goog.provide('<packaged(model.name)>');
 
 (function(){
   <model.comment>
-  <options.packageName>.<model.name> = {
+  <packaged(model.name)> = {
     <model.enumValues:enumValue(); separator=",\n">
   };
 }());

@@ -36,8 +36,11 @@ public class BackboneDialect extends TemplateDialect {
     ST modelTemplate = getTemplate("modelObject", options);
     for (Model model : s.getModels().values()) {
       ST template = model.getEnumValues() == null ? modelTemplate : enumTemplate;
-      OutputStream js = output.writeResource(options.getPackageName().replace('.', '/') + "/"
-        + model.getName() + ".js");
+      String path = model.getName() + ".js";
+      if (options.getPackageName() != null) {
+        path = options.getPackageName().replace('.', '/') + "/" + path;
+      }
+      OutputStream js = output.writeResource(path);
       renderTemplate(forModel(template, model), new OutputStreamWriter(js));
     }
   }
