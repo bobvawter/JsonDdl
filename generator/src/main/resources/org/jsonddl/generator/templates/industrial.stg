@@ -99,6 +99,7 @@ builder() ::= <<
 public static class Builder
     <if(dialectProperties.extends)>extends <dialectProperties.extends><endif>
     implements <names.Builder>\<<model.name>\>,  <names.Traversable>\<<model.name>\>, <names.Digested>, <model.name> {
+  private <model.name> built;
   private <model.name>Impl obj;
   public Builder() {
     this(new <model.name>Impl());
@@ -115,7 +116,12 @@ public static class Builder
     return this;
   }
   public <model.name> build() {
+    // Prevent build() loops from causing NPE's
+    if (built != null) {
+      return built;
+    }
     <model.name>Impl toReturn = obj;
+    built = toReturn;
     obj = null;
     <model.properties:maybeProtect("toReturn"); separator="\n">
     return toReturn;
@@ -246,6 +252,8 @@ objectMethods(immutable) ::= <<
 <if(immutable)>private byte[] digest;<endif>
 public byte[] computeDigest() {
   <if(immutable)>if (digest == null) {
+    // Temporary return value if loops are detected
+    digest = new byte[0];
   <else>byte[] digest;
   <endif>
   <names.DigestVisitor> v = new <names.DigestVisitor>();
