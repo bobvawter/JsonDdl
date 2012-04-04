@@ -3,7 +3,7 @@
   <parent>
     <artifactId>parent</artifactId>
     <groupId>org.jsonddl</groupId>
-    <version>0.1.4</version>
+    <version>0.1.5-SNAPSHOT</version>
   </parent>
   <artifactId>industrial-test</artifactId>
   <name>Tests for industrial dialect</name>
