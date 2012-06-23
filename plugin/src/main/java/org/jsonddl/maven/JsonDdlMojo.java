@@ -14,15 +14,12 @@
 package org.jsonddl.maven;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -31,9 +28,11 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.Scanner;
 import org.jsonddl.generator.Dialect;
 import org.jsonddl.generator.Generator;
 import org.jsonddl.generator.Options;
+import org.sonatype.plexus.build.incremental.BuildContext;
 
 /**
  * Runs the JsonDdl code generator.
@@ -70,16 +69,9 @@ public class JsonDdlMojo extends AbstractMojo {
   /**
    * The destination directory for the generated sources.
    * 
-   * @parameter default-value="${project.build.directory}/generated-sources"
+   * @parameter default-value="${project.build.directory}/jsonddl"
    */
-  private File outputSourceDirectory;
-
-  /**
-   * The destination directory for the generated sources.
-   * 
-   * @parameter default-value="${project.build.directory}/generated-resources"
-   */
-  private File outputResourceDirectory;
+  private File outputDirectory;
 
   /**
    * @parameter default-value="${project}"
@@ -88,21 +80,28 @@ public class JsonDdlMojo extends AbstractMojo {
    */
   private MavenProject project;
 
+  /**
+   * Used for m2eclipse compatibility.
+   * 
+   * @component
+   */
+  private BuildContext context;
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     if (isTest()) {
       if (schemas == null || schemas.isEmpty()) {
-        schemas = findFiles("src/test/jsonddl");
+        schemas = findFiles(new File(project.getBasedir(), "src/test/jsonddl"));
       }
-      outputSourceDirectory = new File(outputSourceDirectory, "test-jsonddl");
-      project.addTestCompileSourceRoot(outputSourceDirectory.getAbsolutePath());
-      outputResourceDirectory = new File(outputResourceDirectory, "test-jsonddl");
     } else {
       if (schemas == null || schemas.isEmpty()) {
-        schemas = findFiles("src/main/jsonddl");
+        schemas = findFiles(new File(project.getBasedir(), "src/main/jsonddl"));
       }
-      outputSourceDirectory = new File(outputSourceDirectory, "jsonddl");
-      project.addCompileSourceRoot(outputSourceDirectory.getAbsolutePath());
+    }
+
+    // Exit now if there's no work to be done
+    if (schemas.isEmpty()) {
+      return;
     }
     Options options = new Options.Builder()
         .withDialects(Arrays.asList(dialects))
@@ -113,6 +112,10 @@ public class JsonDdlMojo extends AbstractMojo {
         File schemaFile = new File(project.getBasedir(), schema.getValue());
         if (!schemaFile.canRead()) {
           throw new MojoExecutionException("Cannot find schema file " + schemaFile.getPath());
+        }
+        // Ignore schema files that have not changed
+        if (!context.hasDelta(schemaFile)) {
+          continue;
         }
         boolean success = new Generator().generate(
             new FileInputStream(schemaFile),
@@ -133,28 +136,27 @@ public class JsonDdlMojo extends AbstractMojo {
               @Override
               public Writer writeJavaSource(String packageName, String simpleName)
                   throws IOException {
-                File dir = new File(outputSourceDirectory, packageName.replace('.',
-                    File.separatorChar));
+                File dir = new File(outputDirectory, packageName.replace('.', File.separatorChar));
                 dir.mkdirs();
                 File f = new File(dir, simpleName + ".java");
-                return new OutputStreamWriter(new FileOutputStream(f), SOURCE_CHARSET);
+                return new OutputStreamWriter(context.newFileOutputStream(f), SOURCE_CHARSET);
               }
 
               @Override
               public OutputStream writeResource(String path) throws IOException {
-                File file = new File(outputResourceDirectory, path);
+                File file = new File(outputDirectory, path);
                 file.getParentFile().mkdirs();
+                OutputStream toReturn = context.newFileOutputStream(file);
                 if (resource == null) {
                   resource = new Resource();
-                  resource.setDirectory(outputResourceDirectory.getPath());
+                  resource.setDirectory(outputDirectory.getAbsolutePath());
                   if (isTest()) {
                     project.addTestResource(resource);
                   } else {
                     project.addResource(resource);
                   }
                 }
-                resource.addInclude(path);
-                return new FileOutputStream(file);
+                return toReturn;
               }
             });
         if (!success) {
@@ -164,24 +166,24 @@ public class JsonDdlMojo extends AbstractMojo {
         throw new MojoExecutionException("Could not generate schema", e);
       }
     }
+    if (isTest()) {
+      project.addTestCompileSourceRoot(outputDirectory.getAbsolutePath());
+    } else {
+      project.addCompileSourceRoot(outputDirectory.getAbsolutePath());
+    }
   }
 
   protected boolean isTest() {
     return false;
   }
 
-  private Map<String, String> findFiles(String lookIn) {
-    File[] files = new File(project.getBasedir(), lookIn).listFiles(new FileFilter() {
-      @Override
-      public boolean accept(File pathname) {
-        return pathname.getPath().endsWith(".js");
-      }
-    });
-    if (files == null || files.length == 0) {
-      return Collections.emptyMap();
-    }
+  private Map<String, String> findFiles(File lookIn) {
     Map<String, String> toReturn = new LinkedHashMap<String, String>();
-    for (File f : files) {
+    Scanner scanner = context.newScanner(lookIn, false);
+    scanner.setIncludes(new String[] { "**/*.js" });
+    scanner.scan();
+    for (String path : scanner.getIncludedFiles()) {
+      File f = new File(lookIn, path);
       String localPackage = f.getName();
       localPackage = localPackage.substring(0, localPackage.length() - 3);
       toReturn.put(localPackage, f.getPath().substring(project.getBasedir().getPath().length()));
