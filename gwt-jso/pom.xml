@@ -3,7 +3,7 @@
   <parent>
     <artifactId>parent</artifactId>
     <groupId>org.jsonddl</groupId>
-    <version>0.1.5-SNAPSHOT</version>
+    <version>0.1.5</version>
   </parent>
   <artifactId>gwt-jso</artifactId>
   <name>Runtime support for gwt-jso dialect</name>
