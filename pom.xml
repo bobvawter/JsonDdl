@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.jsonddl</groupId>
   <artifactId>parent</artifactId>
-  <version>0.1.5</version>
+  <version>0.1.6-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>JsonDdl</name>
   <description>JsonDdl allows JSON schemas to be specified in a JSON-like format and provides code-generation tools based thereon.</description>
