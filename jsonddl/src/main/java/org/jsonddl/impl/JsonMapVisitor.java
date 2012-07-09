@@ -13,16 +13,16 @@
  */
 package org.jsonddl.impl;
 
-import org.jsonddl.JsonDdlObject;
-import org.jsonddl.JsonDdlVisitor;
-import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
-import org.jsonddl.model.Kind;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.jsonddl.JsonDdlObject;
+import org.jsonddl.JsonDdlVisitor;
+import org.jsonddl.JsonDdlVisitor.PropertyVisitor;
+import org.jsonddl.model.Kind;
 
 /**
  * Internal class used to construct the return type of {@link JsonDdlObject#toJsonObject()} and
@@ -209,11 +209,23 @@ public class JsonMapVisitor {
     @Override
     public Object fromJson(Object value, Class<?> leafType) {
       if (boolean.class.equals(leafType) || Boolean.class.equals(leafType)) {
-        return value;
+        if (value instanceof Boolean) {
+          return Boolean.TRUE.equals(value);
+        } else if (value instanceof String) {
+          return Boolean.parseBoolean((String) value);
+        }
       } else if (double.class.equals(leafType) || Double.class.equals(leafType)) {
-        return value;
+        if (value instanceof Number) {
+          return ((Number) value).doubleValue();
+        } else if (value instanceof String) {
+          return Double.valueOf((String) value);
+        }
       } else if (int.class.equals(leafType) || Integer.class.equals(leafType)) {
-        return value;
+        if (value instanceof Number) {
+          return ((Number) value).intValue();
+        } else if (value instanceof String) {
+          return Integer.valueOf((String) value);
+        }
       }
       throw new UnsupportedOperationException("Unexpected input of type "
         + value.getClass().getName() + " for leaf type " + leafType.getName());
